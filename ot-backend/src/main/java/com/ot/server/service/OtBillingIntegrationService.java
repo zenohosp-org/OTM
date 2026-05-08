@@ -2,8 +2,11 @@ package com.ot.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ot.server.entity.OtBooking;
+import com.ot.server.entity.OtBookingStatus;
 import com.ot.server.entity.OtConsumptionItem;
 import com.ot.server.entity.OtInvoice;
+import com.ot.server.repository.OtBookingRepository;
+import com.ot.server.repository.OtConsumptionItemRepository;
 import com.ot.server.repository.OtInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,8 @@ public class OtBillingIntegrationService {
     private final RestTemplate restTemplate;
     private final OtHmsIntegrationService hmsIntegrationService;
     private final OtInvoiceRepository otInvoiceRepository;
+    private final OtBookingRepository otBookingRepository;
+    private final OtConsumptionItemRepository otConsumptionItemRepository;
     private final ObjectMapper objectMapper;
 
     public void createInvoiceForBooking(OtBooking booking,
@@ -130,6 +135,73 @@ public class OtBillingIntegrationService {
         } catch (Exception e) {
             log.warn("Failed to save local OtInvoice for booking {} — HMS invoice was created successfully: {}", booking.getId(), e.getMessage());
         }
+    }
+
+    public Map<String, Object> backfillLocalInvoices(UUID hospitalId) {
+        List<OtBooking> completed = otBookingRepository.findByHospitalIdAndStatus(hospitalId, OtBookingStatus.COMPLETED);
+        int skipped = 0, created = 0, failed = 0;
+
+        for (OtBooking booking : completed) {
+            if (otInvoiceRepository.findByBookingId(booking.getId()).isPresent()) {
+                skipped++;
+                continue;
+            }
+            try {
+                List<OtConsumptionItem> items = otConsumptionItemRepository.findByBookingIdAndHospitalId(booking.getId(), hospitalId);
+                List<Map<String, Object>> invoiceItems = new ArrayList<>();
+                BigDecimal subtotal = BigDecimal.ZERO;
+
+                if (booking.getProcedureCharge() != null && booking.getProcedureCharge().compareTo(BigDecimal.ZERO) > 0) {
+                    invoiceItems.add(Map.of(
+                            "itemType", "CUSTOM",
+                            "description", "OT Procedure: " + (booking.getProcedureName() != null ? booking.getProcedureName() : "Procedure"),
+                            "quantity", 1,
+                            "unitPrice", booking.getProcedureCharge(),
+                            "totalPrice", booking.getProcedureCharge()
+                    ));
+                    subtotal = subtotal.add(booking.getProcedureCharge());
+                }
+
+                for (OtConsumptionItem item : items) {
+                    if (Boolean.FALSE.equals(item.getBillable())) continue;
+                    Integer qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                    BigDecimal unitPrice = item.getUnitPrice() != null ? BigDecimal.valueOf(item.getUnitPrice()) : BigDecimal.ZERO;
+                    BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(qty));
+                    Map<String, Object> invoiceItem = new HashMap<>();
+                    invoiceItem.put("itemType", "CUSTOM");
+                    invoiceItem.put("description", (item.getItemType() != null ? item.getItemType().name() : "Item") + ": " + item.getItemName());
+                    invoiceItem.put("quantity", qty);
+                    invoiceItem.put("unitPrice", unitPrice);
+                    invoiceItem.put("totalPrice", lineTotal);
+                    invoiceItems.add(invoiceItem);
+                    subtotal = subtotal.add(lineTotal);
+                }
+
+                String invoiceNumber = "OT-" + (booking.getActualEnd() != null ? booking.getActualEnd().getYear() : LocalDate.now().getYear())
+                        + "-" + booking.getId().toString().substring(0, 8).toUpperCase();
+                String itemsJson = objectMapper.writeValueAsString(invoiceItems);
+
+                OtInvoice local = OtInvoice.builder()
+                        .invoiceNumber(invoiceNumber)
+                        .hospitalId(hospitalId)
+                        .patientId(booking.getPatientId())
+                        .patientName(booking.getPatientName())
+                        .admissionId(booking.getAdmissionId())
+                        .bookingId(booking.getId())
+                        .status("UNPAID")
+                        .totalAmount(subtotal)
+                        .itemsJson(itemsJson)
+                        .build();
+                otInvoiceRepository.save(local);
+                created++;
+                log.info("Backfilled OtInvoice {} for booking {}", invoiceNumber, booking.getId());
+            } catch (Exception e) {
+                failed++;
+                log.warn("Backfill failed for booking {}: {}", booking.getId(), e.getMessage());
+            }
+        }
+
+        return Map.of("total", completed.size(), "processed", created, "skipped", skipped, "failed", failed);
     }
 
     private Integer resolveHmsPatientId(OtBooking booking, UUID hospitalId, String bearerToken) {

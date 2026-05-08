@@ -1,7 +1,10 @@
 package com.ot.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ot.server.entity.OtBooking;
 import com.ot.server.entity.OtConsumptionItem;
+import com.ot.server.entity.OtInvoice;
+import com.ot.server.repository.OtInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +33,8 @@ public class OtBillingIntegrationService {
 
     private final RestTemplate restTemplate;
     private final OtHmsIntegrationService hmsIntegrationService;
+    private final OtInvoiceRepository otInvoiceRepository;
+    private final ObjectMapper objectMapper;
 
     public void createInvoiceForBooking(OtBooking booking,
                                         UUID hospitalId,
@@ -104,6 +109,26 @@ public class OtBillingIntegrationService {
         } catch (Exception e) {
             log.error("Failed to create HMS invoice for booking {}: {}", booking.getId(), e.getMessage());
             throw e;
+        }
+
+        // Persist local copy — failure must never affect the HMS push above
+        try {
+            String itemsJson = objectMapper.writeValueAsString(invoiceItems);
+            OtInvoice local = OtInvoice.builder()
+                    .invoiceNumber(invoiceNumber)
+                    .hospitalId(hospitalId)
+                    .patientId(booking.getPatientId())
+                    .patientName(booking.getPatientName())
+                    .admissionId(booking.getAdmissionId())
+                    .bookingId(booking.getId())
+                    .status("UNPAID")
+                    .totalAmount(subtotal)
+                    .itemsJson(itemsJson)
+                    .build();
+            otInvoiceRepository.save(local);
+            log.info("Saved local OtInvoice {} for booking {}", invoiceNumber, booking.getId());
+        } catch (Exception e) {
+            log.warn("Failed to save local OtInvoice for booking {} — HMS invoice was created successfully: {}", booking.getId(), e.getMessage());
         }
     }
 

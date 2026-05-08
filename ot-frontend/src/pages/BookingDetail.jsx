@@ -416,16 +416,29 @@ export default function BookingDetail() {
 }
 
 function EndSurgeryModal({ hasAdmission, onClose, onConfirm }) {
+    const [destination, setDestination] = useState('ward'); // 'ward' | 'recovery'
     const [rooms, setRooms] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [roomsLoading, setRoomsLoading] = useState(false);
     const [selectedRoomId, setSelectedRoomId] = useState(null);
 
     useEffect(() => {
+        if (!hasAdmission || destination !== 'recovery') return;
+        setRoomsLoading(true);
         getPostOtRooms()
             .then(r => setRooms(Array.isArray(r.data) ? r.data : []))
             .catch(() => setRooms([]))
-            .finally(() => setLoading(false));
-    }, []);
+            .finally(() => setRoomsLoading(false));
+    }, [hasAdmission, destination]);
+
+    const handleConfirm = () => {
+        if (destination === 'recovery' && selectedRoomId) {
+            onConfirm(selectedRoomId);
+        } else {
+            onConfirm(null); // null → HMS returns patient to previousRoom (their ward)
+        }
+    };
+
+    const canConfirm = destination === 'ward' || (destination === 'recovery' && selectedRoomId);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -441,37 +454,68 @@ function EndSurgeryModal({ hasAdmission, onClose, onConfirm }) {
                 <div className="p-6">
                     {hasAdmission ? (
                         <>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Select a post-OT recovery room for the patient, or skip to return them to their previous room.
-                            </p>
+                            <p className="text-sm text-gray-600 mb-4">Where should the patient go after surgery?</p>
 
-                            {loading ? (
-                                <div className="flex items-center justify-center py-6">
-                                    <Activity size={18} className="animate-spin text-blue-500" />
-                                </div>
-                            ) : rooms.length === 0 ? (
-                                <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
-                                    No post-OT recovery rooms available. Patient will return to previous room.
-                                </p>
-                            ) : (
-                                <div className="space-y-2 mb-4 max-h-52 overflow-y-auto">
-                                    {rooms.map(room => (
-                                        <button
-                                            key={room.id}
-                                            type="button"
-                                            onClick={() => setSelectedRoomId(selectedRoomId === room.id ? null : room.id)}
-                                            className={[
-                                                'w-full text-left px-4 py-3 rounded-xl border-2 transition text-sm',
-                                                selectedRoomId === room.id
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-gray-200 hover:border-gray-300 bg-white',
-                                            ].join(' ')}
-                                        >
-                                            <p className="font-semibold text-gray-900">{room.roomNumber || room.roomName}</p>
-                                            {room.ward && <p className="text-xs text-gray-500 mt-0.5">{room.ward}</p>}
-                                        </button>
-                                    ))}
-                                </div>
+                            <div className="grid grid-cols-2 gap-3 mb-5">
+                                <button
+                                    type="button"
+                                    onClick={() => { setDestination('ward'); setSelectedRoomId(null); }}
+                                    className={[
+                                        'p-4 rounded-xl border-2 text-left transition',
+                                        destination === 'ward'
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300 bg-white',
+                                    ].join(' ')}
+                                >
+                                    <p className="text-xl mb-1">🛏️</p>
+                                    <p className="font-semibold text-sm text-gray-900">Return to Ward</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">Back to admission room</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDestination('recovery')}
+                                    className={[
+                                        'p-4 rounded-xl border-2 text-left transition',
+                                        destination === 'recovery'
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300 bg-white',
+                                    ].join(' ')}
+                                >
+                                    <p className="text-xl mb-1">💊</p>
+                                    <p className="font-semibold text-sm text-gray-900">Recovery Room</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">Post-OT room</p>
+                                </button>
+                            </div>
+
+                            {destination === 'recovery' && (
+                                roomsLoading ? (
+                                    <div className="flex items-center justify-center py-5">
+                                        <Activity size={18} className="animate-spin text-blue-500" />
+                                    </div>
+                                ) : rooms.length === 0 ? (
+                                    <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+                                        No recovery rooms available — patient will return to ward room.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2 mb-4 max-h-44 overflow-y-auto">
+                                        {rooms.map(room => (
+                                            <button
+                                                key={room.id}
+                                                type="button"
+                                                onClick={() => setSelectedRoomId(selectedRoomId === room.id ? null : room.id)}
+                                                className={[
+                                                    'w-full text-left px-4 py-3 rounded-xl border-2 transition text-sm',
+                                                    selectedRoomId === room.id
+                                                        ? 'border-blue-500 bg-blue-50'
+                                                        : 'border-gray-200 hover:border-gray-300 bg-white',
+                                                ].join(' ')}
+                                            >
+                                                <p className="font-semibold text-gray-900">{room.roomNumber || room.roomName}</p>
+                                                {room.ward && <p className="text-xs text-gray-500 mt-0.5">{room.ward}</p>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )
                             )}
 
                             <div className="flex gap-3">
@@ -479,12 +523,10 @@ function EndSurgeryModal({ hasAdmission, onClose, onConfirm }) {
                                     className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                                     Cancel
                                 </button>
-                                <button type="button" onClick={() => onConfirm(null)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
-                                    Skip (return to ward)
-                                </button>
-                                <button type="button" onClick={() => onConfirm(selectedRoomId)}
-                                    disabled={!selectedRoomId}
+                                <button
+                                    type="button"
+                                    onClick={handleConfirm}
+                                    disabled={!canConfirm}
                                     className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white rounded-xl text-sm font-semibold transition">
                                     End Surgery
                                 </button>
@@ -493,7 +535,7 @@ function EndSurgeryModal({ hasAdmission, onClose, onConfirm }) {
                     ) : (
                         <>
                             <p className="text-sm text-gray-600 mb-5">
-                                This patient was not tracked in HMS. Ending surgery will trigger billing only.
+                                This patient is not admitted in HMS. Ending surgery will generate billing only.
                             </p>
                             <div className="flex gap-3">
                                 <button type="button" onClick={onClose}

@@ -1,0 +1,26 @@
+# ─── Backend ───────────────────────────────────────────────
+ot-backend/target/
+ot-backend/.mvn/wrapper/maven-wrapper.jar
+
+# ─── Frontend ──────────────────────────────────────────────
+ot-frontend/node_modules/
+ot-frontend/dist/
+ot-frontend/.vite/
+
+# ─── Secrets — never commit ────────────────────────────────
+ot-backend/src/main/resources/application-local.properties
+ot-backend/src/main/resources/application-prod.properties
+ot-frontend/.env.local
+ot-frontend/.env
+
+# ─── OS / IDE ──────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.claude/

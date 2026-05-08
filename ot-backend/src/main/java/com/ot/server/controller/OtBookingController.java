@@ -59,6 +59,8 @@ public class OtBookingController {
                 .patientId(request.patientId())
                 .patientName(request.patientName())
                 .patientMrn(request.patientMrn())
+                .hmsPatientId(request.patientId() != null ? request.patientId().intValue() : null)
+                .admissionId(request.admissionId())
                 .procedureName(request.procedureName())
                 .procedureCharge(request.procedureCharge())
                 .hmsServiceId(request.hmsServiceId())
@@ -172,12 +174,18 @@ public class OtBookingController {
             OtBooking booking = bookingService.startBooking(id, hospitalId);
             String token = (String) auth.getCredentials();
 
-            // Find patient's active HMS admission and move them to the OT room
-            Map<String, Object> admission = hmsIntegrationService.findActiveAdmission(booking, hospitalId, token);
-            if (admission != null) {
-                UUID admissionId = UUID.fromString(admission.get("id").toString());
+            // Move patient to OT in HMS — use admissionId stored at booking creation if available,
+            // otherwise fall back to HMS lookup by patient ID / MRN
+            UUID admissionId = booking.getAdmissionId();
+            if (admissionId == null) {
+                Map<String, Object> admission = hmsIntegrationService.findActiveAdmission(booking, hospitalId, token);
+                if (admission != null) {
+                    admissionId = UUID.fromString(admission.get("id").toString());
+                    bookingService.saveAdmissionId(booking.getId(), admissionId, hospitalId);
+                }
+            }
+            if (admissionId != null) {
                 hmsIntegrationService.moveToOT(admissionId, booking.getRoomId(), booking.getSurgeonId(), booking.getId(), token);
-                bookingService.saveAdmissionId(booking.getId(), admissionId, hospitalId);
                 booking = bookingService.getBooking(id, hospitalId);
             }
 

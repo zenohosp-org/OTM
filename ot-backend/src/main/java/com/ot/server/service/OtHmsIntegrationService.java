@@ -31,13 +31,14 @@ public class OtHmsIntegrationService {
      * Returns the full admission map or null if not found or HMS is unreachable.
      */
     public Map<String, Object> findActiveAdmission(OtBooking booking, UUID hospitalId, String bearerToken) {
-        if (booking.getHmsPatientId() == null && (booking.getPatientMrn() == null || booking.getPatientMrn().isBlank())) {
-            return null;
-        }
         try {
-            // Resolve HMS patient ID from MRN if not cached
+            // Use cached HMS patient ID, fall back to patientId field, then MRN search
             Integer hmsPatientId = booking.getHmsPatientId();
+            if (hmsPatientId == null && booking.getPatientId() != null) {
+                hmsPatientId = booking.getPatientId().intValue();
+            }
             if (hmsPatientId == null) {
+                if (booking.getPatientMrn() == null || booking.getPatientMrn().isBlank()) return null;
                 hmsPatientId = resolveHmsPatientId(booking.getPatientMrn(), hospitalId, bearerToken);
                 if (hmsPatientId == null) return null;
             }

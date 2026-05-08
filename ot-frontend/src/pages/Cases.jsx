@@ -81,6 +81,7 @@ export default function Cases() {
             patientId: admission.patientId,
             patientName: admission.patientName,
             patientMrn: admission.patientMrn,
+            admissionId: admission.id,
         });
         setShowDrawer(true);
     };
@@ -313,6 +314,7 @@ function CreateBookingDrawer({ onClose, onSuccess, prefilled = null, admissions 
         patientId: prefilled?.patientId ?? '',
         patientName: prefilled?.patientName ?? '',
         patientMrn: prefilled?.patientMrn ?? '',
+        admissionId: prefilled?.admissionId ?? null,
         procedureName: '',
         procedureCharge: '',
         hmsServiceId: '',
@@ -380,11 +382,13 @@ function CreateBookingDrawer({ onClose, onSuccess, prefilled = null, admissions 
     };
 
     const handlePatientSelect = (p) => {
+        const activeAdmission = admissions.find(a => String(a.patientId) === String(p.id));
         setForm(f => ({
             ...f,
             patientId: p.id,
             patientName: p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim(),
             patientMrn: p.mrn || '',
+            admissionId: activeAdmission?.id ?? null,
         }));
         setPatientSearch(''); setShowPatientDrop(false); setPatients([]);
     };
@@ -434,6 +438,7 @@ function CreateBookingDrawer({ onClose, onSuccess, prefilled = null, admissions 
                 roomId: Number(form.roomId) || 0,
                 procedureCharge: form.procedureCharge ? Number(form.procedureCharge) : null,
                 hmsServiceId: form.hmsServiceId || null,
+                admissionId: form.admissionId || null,
             };
             const res = await createBooking(payload);
             const bookingId = res.data.id;

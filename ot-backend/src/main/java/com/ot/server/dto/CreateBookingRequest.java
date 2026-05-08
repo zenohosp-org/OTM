@@ -18,5 +18,6 @@ public record CreateBookingRequest(
         LocalDateTime scheduledEnd,
         String notes,
         Integer bufferMinutes,
-        UUID hmsServiceId
+        UUID hmsServiceId,
+        UUID admissionId
 ) {}

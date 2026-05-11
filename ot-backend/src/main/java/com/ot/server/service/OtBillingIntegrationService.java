@@ -105,15 +105,22 @@ public class OtBillingIntegrationService {
             payload.put("admissionId", booking.getAdmissionId());
         }
 
-        String url = billingApiUrl + "/api/invoices";
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-
-        try {
-            ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.POST, entity, Object.class);
-            log.info("Created HMS invoice {} for booking {}: status={}", invoiceNumber, booking.getId(), response.getStatusCode());
-        } catch (Exception e) {
-            log.error("Failed to create HMS invoice for booking {}: {}", booking.getId(), e.getMessage());
-            throw e;
+        if (booking.getAdmissionId() == null) {
+            // Walk-in / non-admitted patient — push to HMS immediately as before
+            String url = billingApiUrl + "/api/invoices";
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            try {
+                ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.POST, entity, Object.class);
+                log.info("Created HMS invoice {} for booking {}: status={}", invoiceNumber, booking.getId(), response.getStatusCode());
+            } catch (Exception e) {
+                log.error("Failed to create HMS invoice for booking {}: {}", booking.getId(), e.getMessage());
+                throw e;
+            }
+        } else {
+            // IPD-admitted patient — OT charges will be consolidated into the discharge bill.
+            // HMS reads them via GET /api/ot/invoices?admissionId= at billing time.
+            log.info("Skipping HMS push for booking {} — admissionId {} present, charges held for discharge consolidation",
+                    booking.getId(), booking.getAdmissionId());
         }
 
         // Persist local copy — failure must never affect the HMS push above

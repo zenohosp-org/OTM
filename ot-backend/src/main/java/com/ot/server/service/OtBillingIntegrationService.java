@@ -1,10 +1,12 @@
 package com.ot.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ot.server.entity.Hospital;
 import com.ot.server.entity.OtBooking;
 import com.ot.server.entity.OtBookingStatus;
 import com.ot.server.entity.OtConsumptionItem;
 import com.ot.server.entity.OtInvoice;
+import com.ot.server.repository.HospitalRepository;
 import com.ot.server.repository.OtBookingRepository;
 import com.ot.server.repository.OtConsumptionItemRepository;
 import com.ot.server.repository.OtInvoiceRepository;
@@ -39,6 +41,7 @@ public class OtBillingIntegrationService {
     private final OtInvoiceRepository otInvoiceRepository;
     private final OtBookingRepository otBookingRepository;
     private final OtConsumptionItemRepository otConsumptionItemRepository;
+    private final HospitalRepository hospitalRepository;
     private final ObjectMapper objectMapper;
 
     public void createInvoiceForBooking(OtBooking booking,
@@ -89,7 +92,8 @@ public class OtBillingIntegrationService {
             }
         }
 
-        String invoiceNumber = "OT-" + LocalDate.now().getYear() + "-" + booking.getId().toString().substring(0, 8).toUpperCase();
+        Hospital hospital = hospitalRepository.findById(hospitalId).orElse(null);
+        String invoiceNumber = HospitalIdPrefix.of(hospital) + "OT-" + LocalDate.now().getYear() + "-" + booking.getId().toString().substring(0, 8).toUpperCase();
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("invoiceNumber", invoiceNumber);
@@ -146,6 +150,7 @@ public class OtBillingIntegrationService {
 
     public Map<String, Object> backfillLocalInvoices(UUID hospitalId) {
         List<OtBooking> completed = otBookingRepository.findByHospitalIdAndStatus(hospitalId, OtBookingStatus.COMPLETED);
+        Hospital hospital = hospitalRepository.findById(hospitalId).orElse(null);
         int skipped = 0, created = 0, failed = 0;
 
         for (OtBooking booking : completed) {
@@ -184,7 +189,8 @@ public class OtBillingIntegrationService {
                     subtotal = subtotal.add(lineTotal);
                 }
 
-                String invoiceNumber = "OT-" + (booking.getActualEnd() != null ? booking.getActualEnd().getYear() : LocalDate.now().getYear())
+                String invoiceNumber = HospitalIdPrefix.of(hospital) + "OT-"
+                        + (booking.getActualEnd() != null ? booking.getActualEnd().getYear() : LocalDate.now().getYear())
                         + "-" + booking.getId().toString().substring(0, 8).toUpperCase();
                 String itemsJson = objectMapper.writeValueAsString(invoiceItems);
 

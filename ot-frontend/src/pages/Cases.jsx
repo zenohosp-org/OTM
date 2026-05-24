@@ -48,6 +48,7 @@ export default function Cases() {
     const [admissions, setAdmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showDrawer, setShowDrawer] = useState(false);
+    const [activeTab, setActiveTab] = useState('bookings');
     const [prefilledPatient, setPrefilledPatient] = useState(null);
     const navigate = useNavigate();
 
@@ -117,72 +118,119 @@ export default function Cases() {
                 </button>
             </div>
 
-            {activeAdmissions.length > 0 && (
-                <section>
-                    <div className="flex items-center gap-2 mb-3">
-                        <AlertCircle size={15} className="text-amber-500" />
-                        <h2 className="text-sm font-semibold text-gray-700">
-                            Admitted Patients Awaiting OT Booking
-                        </h2>
-                        <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+            {/* Segmented tab control */}
+            <div className="inline-flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 gap-1">
+                <button
+                    onClick={() => setActiveTab('bookings')}
+                    className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
+                        activeTab === 'bookings'
+                            ? 'bg-white text-slate-900 ring-2 ring-blue-500 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Bookings
+                    <span className={`ml-2 text-xs ${activeTab === 'bookings' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {bookings.length}
+                    </span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('awaiting')}
+                    className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+                        activeTab === 'awaiting'
+                            ? 'bg-white text-slate-900 ring-2 ring-blue-500 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Awaiting OT
+                    {activeAdmissions.length > 0 && (
+                        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                             {activeAdmissions.length}
                         </span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {activeAdmissions.map((admission) => (
-                            <AdmissionCard
-                                key={admission.id}
-                                admission={admission}
-                                onBook={() => handleBookFromAdmission(admission)}
-                            />
-                        ))}
-                    </div>
-                </section>
-            )}
+                    )}
+                </button>
+            </div>
 
+            {/* Tab content */}
             <section>
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-gray-700">All Bookings</h2>
-                        <span className="text-xs text-gray-400">{bookings.length} total</span>
+                        <h2 className="text-sm font-semibold text-gray-700">
+                            {activeTab === 'bookings' ? 'All Bookings' : 'Admitted Patients Awaiting OT Booking'}
+                        </h2>
+                        <span className="text-xs text-gray-400">
+                            {activeTab === 'bookings' ? `${bookings.length} total` : `${activeAdmissions.length} awaiting`}
+                        </span>
                     </div>
 
-                    {bookings.length === 0 ? (
-                        <div className="py-16 text-center">
-                            <CheckCircle2 size={40} className="mx-auto text-gray-200 mb-3" />
-                            <p className="text-gray-500 text-sm">No bookings yet</p>
-                            <button
-                                onClick={() => setShowDrawer(true)}
-                                className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                            >
-                                Create the first booking
-                            </button>
-                        </div>
+                    {activeTab === 'bookings' ? (
+                        bookings.length === 0 ? (
+                            <div className="py-16 text-center">
+                                <CheckCircle2 size={40} className="mx-auto text-gray-200 mb-3" />
+                                <p className="text-gray-500 text-sm">No bookings yet</p>
+                                <button
+                                    onClick={() => setShowDrawer(true)}
+                                    className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                >
+                                    Create the first booking
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            <th className="px-6 py-3">Patient</th>
+                                            <th className="px-6 py-3">Procedure</th>
+                                            <th className="px-6 py-3">Room</th>
+                                            <th className="px-6 py-3">Surgeon</th>
+                                            <th className="px-6 py-3">Schedule</th>
+                                            <th className="px-6 py-3">Status</th>
+                                            <th className="px-6 py-3 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {bookings.map(booking => (
+                                            <BookingRow
+                                                key={booking.id}
+                                                booking={booking}
+                                                onClick={() => navigate(`/cases/${booking.id}`)}
+                                            />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                        <th className="px-6 py-3">Patient</th>
-                                        <th className="px-6 py-3">Procedure</th>
-                                        <th className="px-6 py-3">Room</th>
-                                        <th className="px-6 py-3">Surgeon</th>
-                                        <th className="px-6 py-3">Schedule</th>
-                                        <th className="px-6 py-3">Status</th>
-                                        <th className="px-6 py-3 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {bookings.map(booking => (
-                                        <BookingRow
-                                            key={booking.id}
-                                            booking={booking}
-                                            onClick={() => navigate(`/cases/${booking.id}`)}
-                                        />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        activeAdmissions.length === 0 ? (
+                            <div className="py-16 text-center">
+                                <CheckCircle2 size={40} className="mx-auto text-gray-200 mb-3" />
+                                <p className="text-gray-500 text-sm">No admitted patients awaiting OT booking</p>
+                                <p className="text-gray-400 text-xs mt-1">All current admissions already have a booking in progress.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            <th className="px-6 py-3">Patient</th>
+                                            <th className="px-6 py-3">MRN</th>
+                                            <th className="px-6 py-3">Room</th>
+                                            <th className="px-6 py-3">Type</th>
+                                            <th className="px-6 py-3 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {activeAdmissions.map(admission => (
+                                            <AdmissionRow
+                                                key={admission.id}
+                                                admission={admission}
+                                                onBook={() => handleBookFromAdmission(admission)}
+                                            />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
                     )}
                 </div>
             </section>
@@ -204,29 +252,31 @@ export default function Cases() {
     );
 }
 
-function AdmissionCard({ admission, onBook }) {
+function AdmissionRow({ admission, onBook }) {
     const isOT = admission.roomType === 'OT';
     return (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
-            <div>
-                <p className="font-semibold text-gray-900 text-sm">{admission.patientName}</p>
-                <p className="text-xs text-gray-500 mt-0.5">MRN: {admission.patientMrn}</p>
-                <div className="flex items-center gap-1.5 mt-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                        ${isOT ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {admission.roomNumber || 'No room'}
-                    </span>
-                    <span className="text-xs text-gray-400">{admission.roomType}</span>
-                </div>
-            </div>
-            <button
-                onClick={onBook}
-                className="w-full inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
-            >
-                <Plus size={13} />
-                Book for OT
-            </button>
-        </div>
+        <tr className="hover:bg-gray-50 transition-colors">
+            <td className="px-6 py-4">
+                <p className="font-semibold text-gray-900">{admission.patientName}</p>
+            </td>
+            <td className="px-6 py-4 text-gray-700">{admission.patientMrn || '—'}</td>
+            <td className="px-6 py-4">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                    ${isOT ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {admission.roomNumber || 'No room'}
+                </span>
+            </td>
+            <td className="px-6 py-4 text-xs text-gray-500 uppercase tracking-wide">{admission.roomType || '—'}</td>
+            <td className="px-6 py-4 text-right">
+                <button
+                    onClick={onBook}
+                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                >
+                    <Plus size={13} />
+                    Book for OT
+                </button>
+            </td>
+        </tr>
     );
 }
 

@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getBookings, getHmsRooms } from '../api/client';
 
-function isOtRoom(room) {
-    const roomNumber = (room?.roomNumber || '').toString().toLowerCase();
-    const roomCode = (room?.roomCode || '').toString().toLowerCase();
-    return roomNumber.includes('ot') || roomCode.includes('ot');
-}
-
 function generateTimeSlots() {
     const slots = [];
     for (let i = 8; i < 18; i++) {
@@ -41,7 +35,7 @@ export default function Schedules() {
 
     useEffect(() => {
         getHmsRooms()
-            .then((res) => setRooms(Array.isArray(res.data) ? res.data.filter(isOtRoom) : []))
+            .then((res) => setRooms(Array.isArray(res.data) ? res.data : []))
             .catch(() => setRooms([]))
             .finally(() => setLoadingRooms(false));
     }, []);

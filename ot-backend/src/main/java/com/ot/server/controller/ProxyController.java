@@ -103,6 +103,22 @@ public class ProxyController {
         return m;
     }
 
+    /**
+     * Matches OT room types across hospitals that configure custom labels.
+     * Accepts "OT" (canonical), and any variant containing "operat" (Operation/Operating)
+     * or "theat" (Theatre/Theater). Case-insensitive. Excludes POST_OT/post-operative
+     * recovery types — those have a dedicated endpoint.
+     */
+    static boolean isOtRoomType(Map<String, Object> roomOrAdmission) {
+        Object t = roomOrAdmission.get("roomType");
+        if (t == null) return false;
+        String type = t.toString().toLowerCase();
+        if (type.startsWith("post")) return false;
+        return type.equals("ot")
+                || type.contains("operat")
+                || type.contains("theat");
+    }
+
     // ─── HMS: Rooms ───────────────────────────────────────────────────────────
 
     @GetMapping("/hms/rooms")
@@ -119,7 +135,7 @@ public class ProxyController {
 
             List<Map<String, Object>> otRooms = response.getBody() == null ? List.of()
                     : response.getBody().stream()
-                            .filter(r -> "OT".equals(r.get("roomType")))
+                            .filter(ProxyController::isOtRoomType)
                             .collect(Collectors.toList());
 
             return ResponseEntity.ok(otRooms);
@@ -153,7 +169,7 @@ public class ProxyController {
 
             List<Map<String, Object>> otRooms = response.getBody() == null ? List.of()
                     : response.getBody().stream()
-                            .filter(r -> "OT".equals(r.get("roomType")))
+                            .filter(ProxyController::isOtRoomType)
                             .collect(Collectors.toList());
 
             // 2. Build blocked-room map from our DB
@@ -381,7 +397,7 @@ public class ProxyController {
 
             List<Map<String, Object>> otAdmissions = response.getBody() == null ? List.of()
                     : response.getBody().stream()
-                            .filter(a -> "OT".equals(a.get("roomType")))
+                            .filter(ProxyController::isOtRoomType)
                             .collect(Collectors.toList());
 
             return ResponseEntity.ok(otAdmissions);

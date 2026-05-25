@@ -60,6 +60,7 @@ public class ProxyController {
     private final RestTemplate restTemplate;
     private final JwtUtil jwtUtil;
     private final OtBookingRepository bookingRepository;
+    private final com.ot.server.service.OtRoomTypeResolver otRoomTypeResolver;
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
@@ -104,19 +105,30 @@ public class ProxyController {
     }
 
     /**
-     * Matches OT room types across hospitals that configure custom labels.
-     * Accepts "OT" (canonical), and any variant containing "operat" (Operation/Operating)
-     * or "theat" (Theatre/Theater). Case-insensitive. Excludes POST_OT/post-operative
-     * recovery types — those have a dedicated endpoint.
+     * Builds a predicate that decides which HMS rooms/admissions belong to the
+     * OT category for the current hospital.
+     *
+     * Primary path: ask HMS for this hospital's RoomTypeConfig entries and
+     * match Room.roomType against the codes whose category="OT". This is the
+     * canonical source — handles custom codes like "OT_MINOR" out of the box.
+     *
+     * Fallback path (used when the configs endpoint is unreachable or returns
+     * no OT-category entries): heuristic substring match on "ot"/"operat"/"theat",
+     * excluding any "post*" prefix so POST_OT recovery rooms aren't pulled in.
      */
-    static boolean isOtRoomType(Map<String, Object> roomOrAdmission) {
-        Object t = roomOrAdmission.get("roomType");
-        if (t == null) return false;
-        String type = t.toString().toLowerCase();
-        if (type.startsWith("post")) return false;
-        return type.equals("ot")
-                || type.contains("operat")
-                || type.contains("theat");
+    private java.util.function.Predicate<Map<String, Object>> buildOtRoomTypePredicate(
+            UUID hospitalId, Authentication auth) {
+        String token = auth != null ? (String) auth.getCredentials() : null;
+        Set<String> codes = otRoomTypeResolver.getOtCodes(hospitalId, token);
+        return roomOrAdmission -> {
+            Object t = roomOrAdmission.get("roomType");
+            if (t == null) return false;
+            String type = t.toString();
+            if (!codes.isEmpty()) return codes.contains(type);
+            String lower = type.toLowerCase();
+            if (lower.startsWith("post")) return false;
+            return lower.equals("ot") || lower.contains("operat") || lower.contains("theat");
+        };
     }
 
     // ─── HMS: Rooms ───────────────────────────────────────────────────────────
@@ -133,9 +145,10 @@ public class ProxyController {
             ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                     url, HttpMethod.GET, authEntity(auth), new ParameterizedTypeReference<>() {});
 
+            java.util.function.Predicate<Map<String, Object>> isOt = buildOtRoomTypePredicate(hospitalId, auth);
             List<Map<String, Object>> otRooms = response.getBody() == null ? List.of()
                     : response.getBody().stream()
-                            .filter(ProxyController::isOtRoomType)
+                            .filter(isOt)
                             .collect(Collectors.toList());
 
             return ResponseEntity.ok(otRooms);
@@ -167,9 +180,10 @@ public class ProxyController {
             ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                     url, HttpMethod.GET, authEntity(auth), new ParameterizedTypeReference<>() {});
 
+            java.util.function.Predicate<Map<String, Object>> isOt = buildOtRoomTypePredicate(hospitalId, auth);
             List<Map<String, Object>> otRooms = response.getBody() == null ? List.of()
                     : response.getBody().stream()
-                            .filter(ProxyController::isOtRoomType)
+                            .filter(isOt)
                             .collect(Collectors.toList());
 
             // 2. Build blocked-room map from our DB
@@ -395,9 +409,10 @@ public class ProxyController {
             ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                     url, HttpMethod.GET, authEntity(auth), new ParameterizedTypeReference<>() {});
 
+            java.util.function.Predicate<Map<String, Object>> isOt = buildOtRoomTypePredicate(hospitalId, auth);
             List<Map<String, Object>> otAdmissions = response.getBody() == null ? List.of()
                     : response.getBody().stream()
-                            .filter(ProxyController::isOtRoomType)
+                            .filter(isOt)
                             .collect(Collectors.toList());
 
             return ResponseEntity.ok(otAdmissions);

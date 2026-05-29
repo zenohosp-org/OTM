@@ -42,7 +42,6 @@ export default function OtBoard() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(new Date());
-    const [lastRefresh, setLastRefresh] = useState(new Date());
     const [actionLoading, setActionLoading] = useState(null);
 
     useEffect(() => {
@@ -59,7 +58,6 @@ export default function OtBoard() {
             ]);
             setRooms(Array.isArray(roomsRes.data) ? roomsRes.data : []);
             setBookings(Array.isArray(bookingsRes.data) ? bookingsRes.data : []);
-            setLastRefresh(new Date());
         } catch {
             // silently ignore
         } finally {
@@ -109,8 +107,6 @@ export default function OtBoard() {
         completed: bookings.filter(b => b.status === 'COMPLETED').length,
     };
 
-    const secAgo = Math.floor((now - lastRefresh) / 1000);
-
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -133,18 +129,6 @@ export default function OtBoard() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500">
-                        {Object.entries(STATUS_META).map(([k, m]) => (
-                            <span key={k} className="flex items-center gap-1.5">
-                                <span className={`w-2 h-2 rounded-full ${m.dot}`} />
-                                {m.label}
-                            </span>
-                        ))}
-                    </div>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                        <RefreshCw size={11} className={secAgo < 3 ? 'animate-spin' : ''} />
-                        {secAgo}s ago
-                    </span>
                     <button
                         onClick={fetchData}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-700 font-medium"

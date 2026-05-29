@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import OtBoard from './pages/OtBoard';
 import Schedules from './pages/Schedules';
 import Cases from './pages/Cases';
+import NewBooking from './pages/NewBooking';
 import BookingDetail from './pages/BookingDetail';
 import Layout from './components/layout/Layout';
 
@@ -26,6 +27,7 @@ function App() {
                             <Route path="/ot-board" element={<OtBoard />} />
                             <Route path="/schedules" element={<Schedules />} />
                             <Route path="/cases" element={<Cases />} />
+                            <Route path="/cases/new" element={<NewBooking />} />
                             <Route path="/cases/:id" element={<BookingDetail />} />
                         </Route>
                     </Routes>

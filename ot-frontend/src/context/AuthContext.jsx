@@ -107,7 +107,6 @@ export function AuthProvider({ children }) {
     const validateSession = useCallback(async () => {
         try {
             const res = await getMyProfile();
-            sessionStorage.removeItem('ot_auth_redirect_lock');
             const userData = res.data;
             sessionStorage.setItem('ot_user', JSON.stringify(userData));
             setUser(userData);

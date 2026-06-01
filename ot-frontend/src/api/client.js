@@ -15,8 +15,6 @@ if (import.meta.env.VITE_DEV_MOCK_AUTH === 'true' && import.meta.env.VITE_MOCK_J
     });
 }
 
-let redirectLockKey = null;
-
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
@@ -31,16 +29,21 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const config = error.config;
+        const status = error.response?.status;
 
-        if (error.response?.status === 401 && error.config.url.includes('/api/user/me')) {
-            if (!redirectLockKey) {
-                redirectLockKey = `ot_auth_redirect_${Date.now()}`;
-                sessionStorage.setItem(redirectLockKey, '1');
-                setTimeout(() => {
-                    redirectLockKey = null;
-                    sessionStorage.removeItem(redirectLockKey);
-                }, 10000);
-                window.location.href = '/login';
+        // Unauthenticated: kick off the SSO dance via the backend's OAuth2
+        // authorization endpoint. The backend will redirect to the Directory
+        // login page, then bounce back here with a session cookie.
+        // Skip on /login (so the explicit logout landing page stays visible)
+        // and on /sso/callback (so the callback can surface its own error).
+        if (status === 401 || status === 403) {
+            const path = window.location.pathname;
+            const onLogin = path === '/login' || path.startsWith('/login');
+            const onCallback = path.startsWith('/sso/callback');
+            if (!onLogin && !onCallback) {
+                window.location.href = `${API_BASE_URL}/oauth2/authorization/directory`;
+                // Hang the promise — browser is about to navigate away anyway.
+                return new Promise(() => {});
             }
             return Promise.reject(error);
         }

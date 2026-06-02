@@ -1,0 +1,1231 @@
+/* ============================================
+   OT BOARD — Live operating-theatre dashboard
+   ============================================ */
+
+.ot-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-md);
+}
+
+/* ─────────────────────────────────────────────
+   Room card
+   ───────────────────────────────────────────── */
+
+.room-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--gray-200);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s;
+}
+
+.room-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.room-card.status-in-progress { border-color: var(--ot-in-progress-border); }
+.room-card.status-sanitation  { border-color: var(--ot-sanitation-border); }
+.room-card.status-upcoming    { border-color: var(--ot-upcoming-border); }
+.room-card.status-vacant      { border-color: var(--ot-vacant-border); }
+
+.room-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.status-in-progress .room-card-header { background: var(--ot-in-progress-bg); }
+.status-sanitation  .room-card-header { background: var(--ot-sanitation-bg); }
+.status-upcoming    .room-card-header { background: var(--ot-upcoming-bg); }
+.status-vacant      .room-card-header { background: var(--ot-vacant-bg); }
+
+.room-card-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--gray-900);
+}
+
+.room-card-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.status-in-progress .room-card-dot {
+  background: var(--ot-in-progress);
+}
+
+.status-in-progress .room-card-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: var(--ot-in-progress);
+  opacity: 0.4;
+  animation: z-pulse 1.5s ease-in-out infinite;
+}
+
+.status-sanitation .room-card-dot { background: var(--ot-sanitation); }
+.status-upcoming   .room-card-dot { background: var(--ot-upcoming); }
+.status-vacant     .room-card-dot { background: var(--ot-vacant); }
+
+.room-card-status {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-in-progress .room-card-status { color: #b91c1c; }
+.status-sanitation  .room-card-status { color: #92400e; }
+.status-upcoming    .room-card-status { color: #1d4ed8; }
+.status-vacant      .room-card-status { color: #047857; }
+
+.room-card-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.room-card-procedure {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.room-card-meta {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.room-card-meta-divider {
+  color: var(--gray-300);
+  margin: 0 4px;
+}
+
+.room-card-overline {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+/* Timer block */
+.room-card-timer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.room-card-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.room-card-timer-row .elapsed {
+  color: var(--gray-500);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.room-card-timer-row .elapsed-value {
+  color: var(--gray-900);
+  font-weight: 700;
+}
+
+.room-card-timer-row .remaining {
+  color: var(--gray-500);
+}
+
+.room-card-timer-row .remaining strong {
+  color: var(--gray-900);
+}
+
+.room-card-timer-row .overtime {
+  color: var(--ot-in-progress);
+  font-weight: 700;
+}
+
+.room-card-timer-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--gray-400);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status banner */
+.room-card-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.room-card-banner.is-sanitation {
+  background: var(--ot-sanitation-bg);
+  border-color: var(--ot-sanitation-border);
+  color: #92400e;
+}
+
+.room-card-banner.is-upcoming {
+  background: var(--ot-upcoming-bg);
+  border-color: var(--ot-upcoming-border);
+  color: #1d4ed8;
+}
+
+.room-card-banner.is-soon {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.room-card-banner svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.room-card-vacant {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--gray-700);
+}
+
+.room-card-vacant-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ot-vacant);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.room-card-vacant-next {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.room-card-vacant-next strong {
+  color: var(--gray-700);
+  font-weight: 600;
+}
+
+.room-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.room-card-actions > * {
+  flex: 1;
+}
+
+/* ─────────────────────────────────────────────
+   Live surgery timer panel (used in BookingDetail)
+   ───────────────────────────────────────────── */
+
+.live-timer-panel {
+  background: var(--ot-vacant-bg);
+  border: 2px solid var(--ot-vacant);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+}
+
+.live-timer-panel.is-overtime {
+  background: var(--ot-in-progress-bg);
+  border-color: var(--ot-in-progress);
+}
+
+.live-timer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.live-timer-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ot-vacant);
+}
+
+.live-timer-panel.is-overtime .live-timer-label {
+  color: var(--ot-in-progress);
+}
+
+.live-timer-meta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ot-vacant);
+}
+
+.live-timer-panel.is-overtime .live-timer-meta {
+  color: var(--ot-in-progress);
+}
+
+.live-timer-value {
+  font-size: 36px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--ot-vacant);
+  line-height: 1.1;
+}
+
+.live-timer-panel.is-overtime .live-timer-value {
+  color: var(--ot-in-progress);
+}
+
+.live-timer-sub {
+  font-size: 12px;
+  color: var(--gray-600);
+  margin-top: 6px;
+}
+
+.live-timer-progress {
+  margin-top: 16px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.live-timer-progress-bar {
+  height: 100%;
+  width: var(--progress, 0%);
+  background: var(--ot-vacant);
+  border-radius: var(--radius-full);
+  transition: width 0.8s ease;
+}
+
+.live-timer-panel.is-overtime .live-timer-progress-bar {
+  background: var(--ot-in-progress);
+}
+
+/* ─────────────────────────────────────────────
+   Room availability grid (for NewBooking)
+   ───────────────────────────────────────────── */
+
+.room-availability-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.room-availability-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.room-availability-header.is-available { color: var(--ot-vacant); }
+.room-availability-header.is-occupied  { color: var(--gray-500); }
+
+.room-availability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.room-tile {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  text-align: left;
+  border: 2px solid;
+  transition: all 0.15s;
+  cursor: pointer;
+  background: var(--white);
+  font-family: inherit;
+}
+
+.room-tile:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+
+.room-tile.is-available {
+  background: var(--ot-vacant-bg);
+  border-color: var(--ot-vacant-border);
+}
+
+.room-tile.is-available:hover {
+  background: #d1fae5;
+  border-color: var(--ot-vacant);
+}
+
+.room-tile.is-available.is-selected {
+  background: var(--ot-vacant);
+  border-color: var(--ot-vacant);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.24);
+}
+
+.room-tile.is-occupied {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.room-tile.is-occupied.is-in-progress {
+  background: var(--ot-in-progress-bg);
+  border-color: var(--ot-in-progress-border);
+}
+
+.room-tile.is-occupied.is-sanitation {
+  background: var(--ot-sanitation-bg);
+  border-color: var(--ot-sanitation-border);
+}
+
+.room-tile.is-occupied.is-hms-occupied {
+  background: var(--gray-50);
+  border-color: var(--gray-200);
+}
+
+.room-tile.is-occupied.is-booked {
+  background: var(--ot-upcoming-bg);
+  border-color: var(--ot-upcoming-border);
+}
+
+.room-tile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.room-tile.is-selected .room-tile-name {
+  color: var(--white);
+}
+
+.room-tile-ward {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.room-tile.is-selected .room-tile-ward {
+  color: #d1fae5;
+}
+
+.room-tile-status {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.room-tile-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.room-tile.is-available .room-tile-status-dot { background: var(--ot-vacant); }
+.room-tile.is-available.is-selected .room-tile-status-dot { background: var(--white); }
+.room-tile.is-occupied.is-in-progress  .room-tile-status-dot { background: var(--ot-in-progress); }
+.room-tile.is-occupied.is-sanitation   .room-tile-status-dot { background: var(--ot-sanitation); }
+.room-tile.is-occupied.is-hms-occupied .room-tile-status-dot { background: var(--gray-400); }
+.room-tile.is-occupied.is-booked       .room-tile-status-dot { background: var(--ot-upcoming); }
+
+.room-tile.is-available .room-tile-status { color: #047857; }
+.room-tile.is-available.is-selected .room-tile-status { color: var(--white); }
+.room-tile.is-occupied.is-in-progress  .room-tile-status { color: #b91c1c; }
+.room-tile.is-occupied.is-sanitation   .room-tile-status { color: #92400e; }
+.room-tile.is-occupied.is-hms-occupied .room-tile-status { color: var(--gray-600); }
+.room-tile.is-occupied.is-booked       .room-tile-status { color: #1d4ed8; }
+
+.room-tile-occupied-by {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--gray-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.room-tile-free-at {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--gray-400);
+}
+
+.room-tile-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  color: var(--white);
+}
+
+/* Empty/loading skeleton tiles */
+.room-tile-skeleton {
+  height: 92px;
+  background: var(--gray-100);
+  border-radius: var(--radius);
+  animation: z-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.room-availability-empty {
+  padding: 32px 24px;
+  text-align: center;
+  border: 2px dashed var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--gray-50);
+  color: var(--gray-500);
+  font-size: 13px;
+}
+
+.room-availability-empty svg {
+  width: 20px;
+  height: 20px;
+  color: var(--gray-300);
+  margin-bottom: 8px;
+}
+
+/* ─────────────────────────────────────────────
+   Schedule timeline
+   ───────────────────────────────────────────── */
+
+.schedule-timeline {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.schedule-timeline-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.schedule-timeline-table thead th {
+  background: var(--gray-50);
+  color: var(--gray-700);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray-200);
+  text-align: left;
+}
+
+.schedule-timeline-table .time-col {
+  width: 90px;
+  background: var(--gray-50);
+  font-weight: 600;
+  color: var(--gray-700);
+  font-variant-numeric: tabular-nums;
+  border-right: 1px solid var(--gray-100);
+}
+
+.schedule-timeline-table tbody td {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--gray-100);
+  height: 64px;
+}
+
+.schedule-timeline-table tbody td + td {
+  border-left: 1px solid var(--gray-100);
+}
+
+.schedule-cell {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.schedule-cell:hover {
+  transform: scale(1.02);
+}
+
+.schedule-cell-title {
+  font-weight: 700;
+  color: var(--gray-900);
+  font-size: 12px;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.schedule-cell-sub {
+  font-size: 10.5px;
+  color: var(--gray-600);
+}
+
+.schedule-cell.status-confirmed   { background: var(--ot-upcoming-bg); border-left: 3px solid var(--ot-upcoming); }
+.schedule-cell.status-in-progress { background: var(--ot-vacant-bg); border-left: 3px solid var(--ot-vacant); }
+.schedule-cell.status-completed   { background: var(--ot-completed-bg); border-left: 3px solid var(--ot-completed); }
+.schedule-cell.status-cancelled   { background: var(--ot-cancelled-bg); border-left: 3px solid var(--ot-cancelled); }
+.schedule-cell.status-sanitation  { background: var(--ot-sanitation-bg); border-left: 3px solid var(--ot-sanitation); }
+.schedule-cell.status-requested   { background: var(--gray-100); border-left: 3px solid var(--gray-400); }
+
+/* ─────────────────────────────────────────────
+   Auth split (Login)
+   ───────────────────────────────────────────── */
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-50);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.10) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 64px -16px rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--gray-200);
+  padding: 36px 32px;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.auth-brand-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  background: var(--brand-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
+  flex-shrink: 0;
+}
+
+.auth-brand-mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+.auth-brand-text {
+  min-width: 0;
+}
+
+.auth-brand-overline {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+
+.auth-brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--gray-900);
+  margin: 0 0 6px;
+}
+
+.auth-description {
+  font-size: 13px;
+  color: var(--gray-500);
+  line-height: 1.55;
+  margin: 0 0 28px;
+}
+
+.auth-footer-note {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+.auth-version {
+  text-align: center;
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 18px;
+  letter-spacing: 0.04em;
+}
+
+/* ─────────────────────────────────────────────
+   Booking-detail consumption row
+   ───────────────────────────────────────────── */
+
+.consumption-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius);
+  background: var(--white);
+  transition: background 0.15s;
+}
+
+.consumption-row:hover {
+  background: var(--gray-50);
+}
+
+.consumption-row + .consumption-row {
+  margin-top: 8px;
+}
+
+.consumption-row-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.consumption-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.consumption-row-meta {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+.consumption-row-meta .is-billable {
+  color: var(--success);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.consumption-row-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.consumption-row-delete {
+  background: transparent;
+  border: none;
+  color: var(--gray-300);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.consumption-row-delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.consumption-row-delete svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─────────────────────────────────────────────
+   Billing summary
+   ───────────────────────────────────────────── */
+
+.billing-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.billing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--gray-600);
+}
+
+.billing-row.is-line-item {
+  padding-left: 12px;
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.billing-row-value {
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.billing-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1.5px dashed var(--gray-200);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.billing-total-value {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.billing-note {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 6px;
+}
+
+.billing-note.is-success {
+  color: var(--success);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.billing-note svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ─────────────────────────────────────────────
+   Timeline (booking detail timestamps)
+   ───────────────────────────────────────────── */
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.timeline-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.timeline-item-label {
+  color: var(--gray-500);
+  font-weight: 600;
+}
+
+.timeline-item-value {
+  color: var(--gray-800);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-item.is-active .timeline-item-label,
+.timeline-item.is-active .timeline-item-value {
+  color: var(--brand-primary);
+}
+
+/* ─────────────────────────────────────────────
+   Destination selector (end surgery modal)
+   ───────────────────────────────────────────── */
+
+.destination-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.destination-tile {
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.destination-tile:hover {
+  border-color: var(--gray-300);
+  background: var(--gray-50);
+}
+
+.destination-tile.is-selected {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-lighter);
+}
+
+.destination-tile-emoji {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.destination-tile-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.3;
+}
+
+.destination-tile-sub {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.destination-room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.destination-room-item {
+  text-align: left;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.destination-room-item:hover {
+  border-color: var(--gray-300);
+  background: var(--gray-50);
+}
+
+.destination-room-item.is-selected {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-lighter);
+}
+
+.destination-room-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.destination-room-ward {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+/* ─────────────────────────────────────────────
+   Today bookings (Dashboard list)
+   ───────────────────────────────────────────── */
+
+.today-bookings {
+  display: flex;
+  flex-direction: column;
+}
+
+.today-booking-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-100);
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.today-booking-row:last-child {
+  border-bottom: none;
+}
+
+.today-booking-row:hover {
+  background: var(--gray-50);
+}
+
+.today-booking-time {
+  width: 64px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.today-booking-time-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.today-booking-time-duration {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-booking-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-booking-procedure {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.today-booking-meta {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Utilization meter */
+.utilization-panel {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.utilization-value {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--gray-900);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.utilization-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* Active surgeries side panel */
+.active-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.active-list-item {
+  text-align: left;
+  background: var(--ot-in-progress-bg);
+  border: 1px solid var(--ot-in-progress-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.active-list-item:hover {
+  background: #fde7e7;
+}
+
+.active-list-procedure {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.active-list-meta {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Next up panel */
+.next-up-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.next-up-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.next-up-item:last-child {
+  border-bottom: none;
+}
+
+.next-up-item:hover .next-up-text {
+  color: var(--gray-900);
+}
+
+.next-up-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+  width: 56px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.next-up-text {
+  font-size: 12px;
+  color: var(--gray-700);
+  min-width: 0;
+}
+
+.next-up-text-title {
+  font-weight: 600;
+  color: var(--gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.next-up-text-sub {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dashboard panel link "View all →" */
+.panel-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+.panel-link:hover {
+  color: var(--gray-900);
+}
+
+.panel-link svg {
+  width: 12px;
+  height: 12px;
+}

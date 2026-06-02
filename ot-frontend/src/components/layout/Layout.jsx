@@ -4,18 +4,18 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0f0f0f]">
-      <div className="no-print h-full">
-        <Sidebar isOpen={sidebarOpen} />
+    <div className="app-shell">
+      <div className="no-print">
+        <Sidebar collapsed={collapsed} />
       </div>
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="app-shell-main">
         <div className="no-print">
-          <Header onMenuClick={() => setSidebarOpen((p) => !p)} />
+          <Header onMenuClick={() => setCollapsed((p) => !p)} />
         </div>
-        <main className="flex-1 overflow-y-auto p-6 print:p-0 print:overflow-visible">
+        <main className="app-content">
           <Outlet />
         </main>
       </div>

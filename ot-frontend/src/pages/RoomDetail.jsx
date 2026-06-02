@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getBookings, getConsumption } from '../api/client';
+import {
+    ArrowLeft, Loader2, ChevronDown, ChevronUp, Calendar, Clock, ListChecks,
+} from 'lucide-react';
 
 function generateTimeSlots() {
     const slots = [];
@@ -17,32 +20,23 @@ function isTimeInRange(timeSlot, start, end) {
     return hour >= startHour && hour < endHour;
 }
 
-const STATUS_COLORS = {
-    REQUESTED: 'bg-gray-200',
-    CONFIRMED: 'bg-blue-200',
-    IN_PROGRESS: 'bg-green-200 animate-pulse',
-    PENDING_SANITATION: 'bg-amber-200',
-    COMPLETED: 'bg-slate-200',
-    CANCELLED: 'bg-red-200',
+const STATUS_CLASS = {
+    REQUESTED:          'status-requested',
+    CONFIRMED:          'status-confirmed',
+    IN_PROGRESS:        'status-in-progress',
+    PENDING_SANITATION: 'status-sanitation',
+    COMPLETED:          'status-completed',
+    CANCELLED:          'status-cancelled',
 };
 
 function formatDateTime(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+    return new Date(dateString).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
 }
 
 function formatTime(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    return new Date(dateString).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatDuration(startStr, endStr) {
@@ -51,9 +45,7 @@ function formatDuration(startStr, endStr) {
     const mins = Math.round((end - start) / 60000);
     const hours = Math.floor(mins / 60);
     const remainder = mins % 60;
-    if (hours > 0) {
-        return `${hours}h ${remainder}m`;
-    }
+    if (hours > 0) return `${hours}h ${remainder}m`;
     return `${mins}m`;
 }
 
@@ -73,7 +65,6 @@ export default function RoomDetail() {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
-        const today = new Date().toISOString().split('T')[0];
         setLoading(true);
         getBookings({ roomId })
             .then((res) => setAllBookings(Array.isArray(res.data) ? res.data : []))
@@ -107,10 +98,7 @@ export default function RoomDetail() {
                 setExpandedCaseId(bookingId);
             })
             .catch(() => {
-                setCaseConsumption((prev) => ({
-                    ...prev,
-                    [bookingId]: [],
-                }));
+                setCaseConsumption((prev) => ({ ...prev, [bookingId]: [] }));
                 setExpandedCaseId(bookingId);
             });
     };
@@ -126,35 +114,43 @@ export default function RoomDetail() {
     const timeSlots = generateTimeSlots();
 
     return (
-        <div className="p-8">
-            <div className="flex items-center gap-4 mb-6">
+        <div className="z-page">
+            <header className="z-page-header">
+                <div className="z-page-title-group">
+                    <button onClick={() => navigate('/schedules')} className="z-back-btn" aria-label="Back">
+                        <ArrowLeft />
+                    </button>
+                    <div>
+                        <h1 className="z-page-title">{room?.roomNumber || roomId}</h1>
+                        {room && <p className="z-page-subtitle">{room.roomType}</p>}
+                    </div>
+                </div>
+            </header>
+
+            <div className="z-tabs-pill">
                 <button
-                    onClick={() => navigate('/schedules')}
-                    className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                    onClick={() => setTab('slots')}
+                    className={`z-tab-pill${tab === 'slots' ? ' is-active' : ''}`}
                 >
-                    ← Back to Schedules
+                    <Clock className="u-w-4 u-h-4" /> Current Slots
                 </button>
-                <h1 className="text-3xl font-bold text-black">
-                    {room?.roomNumber || roomId}
-                </h1>
-                {room && <span className="text-gray-600 text-sm">{room.roomType}</span>}
+                <button
+                    onClick={() => setTab('timeline')}
+                    className={`z-tab-pill${tab === 'timeline' ? ' is-active' : ''}`}
+                >
+                    <Calendar className="u-w-4 u-h-4" /> Timeline
+                </button>
+                <button
+                    onClick={() => { setTab('cases'); loadCompletedCases(); }}
+                    className={`z-tab-pill${tab === 'cases' ? ' is-active' : ''}`}
+                >
+                    <ListChecks className="u-w-4 u-h-4" /> Previous Cases
+                </button>
             </div>
 
-            <div className="flex gap-2 mb-6 border-b border-gray-200">
-                <TabButton label="Current Slots" active={tab === 'slots'} onClick={() => setTab('slots')} />
-                <TabButton label="Timeline" active={tab === 'timeline'} onClick={() => setTab('timeline')} />
-                <TabButton
-                    label="Previous Cases"
-                    active={tab === 'cases'}
-                    onClick={() => {
-                        setTab('cases');
-                        loadCompletedCases();
-                    }}
-                />
-            </div>
-
-            {tab === 'slots' && <CurrentSlots bookings={todayBookings} upcomingBookings={upcomingBookings} loading={loading} />}
-
+            {tab === 'slots' && (
+                <CurrentSlots bookings={todayBookings} upcomingBookings={upcomingBookings} loading={loading} />
+            )}
             {tab === 'timeline' && (
                 <TimelineTab
                     roomId={roomId}
@@ -167,7 +163,6 @@ export default function RoomDetail() {
                     timeSlots={timeSlots}
                 />
             )}
-
             {tab === 'cases' && (
                 <PreviousCases
                     cases={completedBookings}
@@ -181,61 +176,56 @@ export default function RoomDetail() {
     );
 }
 
-function TabButton({ label, active, onClick }) {
-    return (
-        <button
-            onClick={onClick}
-            className={`px-5 py-2 font-medium text-sm border-b-2 transition -mb-px ${
-                active
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-black'
-            }`}
-        >
-            {label}
-        </button>
-    );
-}
-
 function CurrentSlots({ bookings, upcomingBookings, loading }) {
-    if (loading) return <div className="text-black">Loading slots...</div>;
+    if (loading) return (
+        <div className="z-page-loader">
+            <Loader2 /><span>Loading slots…</span>
+        </div>
+    );
 
     return (
-        <div className="space-y-8">
+        <div className="u-stack-lg">
             <div>
-                <h2 className="text-lg font-semibold text-black mb-4">Today's Slots</h2>
+                <h2 className="z-section-title u-mb-3">Today's Slots</h2>
                 {bookings.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="u-grid u-grid-cols-1 md:u-grid-cols-2 u-gap-3">
                         {bookings.map((booking) => (
-                            <div key={booking.id} className={`p-4 rounded-lg text-black ${STATUS_COLORS[booking.status] || 'bg-gray-100'}`}>
-                                <div className="font-semibold">{formatTime(booking.scheduledStart)} - {formatTime(booking.scheduledEnd)}</div>
-                                <div className="text-sm mt-2">
-                                    <div><span className="font-medium">Patient:</span> {booking.patientName} ({booking.patientMrn})</div>
-                                    <div><span className="font-medium">Surgeon:</span> {booking.surgeonName}</div>
-                                    <div><span className="font-medium">Procedure:</span> {booking.procedureName}</div>
-                                    <div className="text-xs mt-2 opacity-75">Status: {booking.status}</div>
+                            <div key={booking.id} className="z-card">
+                                <p className="u-font-bold u-text-strong u-tabular">
+                                    {formatTime(booking.scheduledStart)} – {formatTime(booking.scheduledEnd)}
+                                </p>
+                                <div className="u-mt-2 u-text-sm u-stack-sm">
+                                    <p><span className="u-font-medium">Patient:</span> {booking.patientName} ({booking.patientMrn})</p>
+                                    <p><span className="u-font-medium">Surgeon:</span> {booking.surgeonName}</p>
+                                    <p><span className="u-font-medium">Procedure:</span> {booking.procedureName}</p>
+                                </div>
+                                <div className="u-mt-3">
+                                    <span className={`z-badge is-status-${(booking.status || '').toLowerCase().replace(/_/g, '-')}`}>
+                                        {booking.status.replace(/_/g, ' ')}
+                                    </span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="text-gray-600">No bookings today</div>
+                    <p className="u-text-muted">No bookings today</p>
                 )}
             </div>
 
             {upcomingBookings.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold text-black mb-4">Upcoming Slots</h2>
-                    <div className="space-y-3">
+                    <h2 className="z-section-title u-mb-3">Upcoming Slots</h2>
+                    <div className="u-stack-sm">
                         {upcomingBookings.map((booking) => (
-                            <div key={booking.id} className="border border-gray-200 rounded-lg p-4 text-black hover:bg-gray-50">
-                                <div className="flex justify-between items-start">
+                            <div key={booking.id} className="z-card is-padded-sm">
+                                <div className="u-flex u-justify-between u-items-start">
                                     <div>
-                                        <div className="font-semibold">{formatDateTime(booking.scheduledStart)}</div>
-                                        <div className="text-sm text-gray-600 mt-1">{booking.patientName} - {booking.procedureName}</div>
-                                        <div className="text-sm text-gray-600">Surgeon: {booking.surgeonName}</div>
+                                        <p className="u-font-bold u-text-strong u-tabular">{formatDateTime(booking.scheduledStart)}</p>
+                                        <p className="u-text-sm u-text-muted u-mt-1">{booking.patientName} — {booking.procedureName}</p>
+                                        <p className="u-text-sm u-text-muted">Surgeon: {booking.surgeonName}</p>
                                     </div>
-                                    <span className={`text-xs px-2 py-1 rounded ${STATUS_COLORS[booking.status] || 'bg-gray-200'} text-black`}>
-                                        {booking.status}
+                                    <span className={`z-badge is-status-${(booking.status || '').toLowerCase().replace(/_/g, '-')}`}>
+                                        {booking.status.replace(/_/g, ' ')}
                                     </span>
                                 </div>
                             </div>
@@ -248,28 +238,30 @@ function CurrentSlots({ bookings, upcomingBookings, loading }) {
 }
 
 function TimelineTab({ roomId, roomNumber, selectedDate, onDateChange, bookings, allBookings, loading, timeSlots }) {
-    if (loading) return <div className="text-black">Loading timeline...</div>;
+    if (loading) return (
+        <div className="z-page-loader">
+            <Loader2 /><span>Loading timeline…</span>
+        </div>
+    );
 
     return (
-        <div className="space-y-6">
-            <div>
-                <label className="block text-sm font-medium text-black mb-2">Select Date</label>
+        <div className="u-stack-lg">
+            <div className="z-field date-filter-field">
+                <label className="z-label">Select Date</label>
                 <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => onDateChange(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-black"
+                    className="z-input"
                 />
             </div>
 
-            <div className="overflow-x-auto bg-white rounded-lg shadow">
-                <table className="w-full">
+            <div className="schedule-timeline">
+                <table className="schedule-timeline-table">
                     <thead>
-                        <tr className="border-b bg-gray-50">
-                            <th className="px-4 py-3 text-left font-semibold w-32 text-black">Time</th>
-                            <th className="px-4 py-3 text-left font-semibold text-black">
-                                Room {roomNumber || roomId}
-                            </th>
+                        <tr>
+                            <th className="time-col">Time</th>
+                            <th>Room {roomNumber || roomId}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -278,13 +270,13 @@ function TimelineTab({ roomId, roomNumber, selectedDate, onDateChange, bookings,
                                 (b) => isTimeInRange(slot, b.scheduledStart, b.scheduledEnd)
                             );
                             return (
-                                <tr key={i} className="border-b hover:bg-gray-50">
-                                    <td className="px-4 py-2 font-medium text-sm bg-gray-50 text-black">{slot}</td>
-                                    <td className="px-4 py-2">
+                                <tr key={i}>
+                                    <td className="time-col">{slot}</td>
+                                    <td>
                                         {booking && (
-                                            <div className={`p-2 rounded text-sm text-black ${STATUS_COLORS[booking.status] || 'bg-gray-100'}`}>
-                                                <div className="font-semibold">{booking.procedureName}</div>
-                                                <div className="text-xs">{booking.surgeonName}</div>
+                                            <div className={`schedule-cell ${STATUS_CLASS[booking.status] || 'status-requested'}`}>
+                                                <span className="schedule-cell-title">{booking.procedureName}</span>
+                                                <span className="schedule-cell-sub">{booking.surgeonName}</span>
                                             </div>
                                         )}
                                     </td>
@@ -297,12 +289,12 @@ function TimelineTab({ roomId, roomNumber, selectedDate, onDateChange, bookings,
 
             {allBookings.length > 0 && (
                 <div>
-                    <h3 className="font-semibold text-black mb-3">Upcoming Bookings</h3>
-                    <div className="space-y-2">
+                    <h3 className="z-section-title u-mb-3">Upcoming Bookings</h3>
+                    <div className="u-stack-sm">
                         {allBookings.map((booking) => (
-                            <div key={booking.id} className="border border-gray-200 rounded p-3 text-sm text-black">
-                                <div className="font-medium">{formatDateTime(booking.scheduledStart)}</div>
-                                <div className="text-gray-600">{booking.patientName} - {booking.procedureName}</div>
+                            <div key={booking.id} className="z-card is-padded-sm">
+                                <p className="u-font-medium u-text-strong">{formatDateTime(booking.scheduledStart)}</p>
+                                <p className="u-text-sm u-text-muted u-mt-1">{booking.patientName} — {booking.procedureName}</p>
                             </div>
                         ))}
                     </div>
@@ -313,81 +305,83 @@ function TimelineTab({ roomId, roomNumber, selectedDate, onDateChange, bookings,
 }
 
 function PreviousCases({ cases, loading, expandedId, onToggleExpand, consumption }) {
-    if (loading) return <div className="text-black">Loading cases...</div>;
+    if (loading) return (
+        <div className="z-page-loader">
+            <Loader2 /><span>Loading cases…</span>
+        </div>
+    );
 
     if (cases.length === 0) {
-        return <div className="text-gray-600">No completed cases found</div>;
+        return (
+            <div className="z-empty">
+                <div className="z-empty-icon"><ListChecks /></div>
+                <p className="z-empty-title">No completed cases found</p>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-3">
+        <div className="u-stack-sm">
             {cases.map((caseItem) => (
-                <div key={caseItem.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                    <div
-                        className="p-4 bg-white cursor-pointer hover:bg-gray-50"
+                <div key={caseItem.id} className="z-card is-no-padding">
+                    <button
+                        type="button"
+                        className="u-w-full u-text-left u-p-4 u-bg-transparent u-border-none u-cursor-pointer u-flex u-justify-between u-items-start"
                         onClick={() => onToggleExpand(caseItem.id)}
                     >
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <div className="font-semibold text-black">
-                                    {caseItem.patientName} ({caseItem.patientMrn})
-                                </div>
-                                <div className="text-sm text-gray-600 mt-1">
-                                    <span className="font-medium">Surgeon:</span> {caseItem.surgeonName}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-medium">Procedure:</span> {caseItem.procedureName}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-medium">Date:</span> {formatDateTime(caseItem.scheduledStart)}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-medium">Duration:</span>{' '}
-                                    {formatDuration(
-                                        caseItem.actualStart || caseItem.scheduledStart,
-                                        caseItem.actualEnd || caseItem.scheduledEnd
-                                    )}
-                                </div>
-                            </div>
-                            <span className="text-lg text-gray-500">
-                                {expandedId === caseItem.id ? '−' : '+'}
-                            </span>
+                        <div className="u-flex-1 u-text-sm u-stack-sm">
+                            <p className="u-font-bold u-text-strong">
+                                {caseItem.patientName} ({caseItem.patientMrn})
+                            </p>
+                            <p className="u-text-muted"><span className="u-font-medium">Surgeon:</span> {caseItem.surgeonName}</p>
+                            <p className="u-text-muted"><span className="u-font-medium">Procedure:</span> {caseItem.procedureName}</p>
+                            <p className="u-text-muted"><span className="u-font-medium">Date:</span> {formatDateTime(caseItem.scheduledStart)}</p>
+                            <p className="u-text-muted">
+                                <span className="u-font-medium">Duration:</span>{' '}
+                                {formatDuration(
+                                    caseItem.actualStart || caseItem.scheduledStart,
+                                    caseItem.actualEnd || caseItem.scheduledEnd
+                                )}
+                            </p>
                         </div>
-                    </div>
+                        {expandedId === caseItem.id ? <ChevronUp /> : <ChevronDown />}
+                    </button>
 
                     {expandedId === caseItem.id && (
-                        <div className="bg-gray-50 border-t border-gray-200 p-4">
+                        <div className="u-bg-gray-50 u-border-t u-p-4">
                             {consumption[caseItem.id] && consumption[caseItem.id].length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b">
-                                                <th className="px-3 py-2 text-left font-semibold text-black">Item</th>
-                                                <th className="px-3 py-2 text-left font-semibold text-black">Type</th>
-                                                <th className="px-3 py-2 text-center font-semibold text-black">Qty</th>
-                                                <th className="px-3 py-2 text-right font-semibold text-black">Unit Price</th>
-                                                <th className="px-3 py-2 text-center font-semibold text-black">Billable</th>
+                                <table className="z-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Type</th>
+                                            <th className="u-text-center">Qty</th>
+                                            <th className="u-text-right">Unit Price</th>
+                                            <th className="u-text-center">Billable</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {consumption[caseItem.id].map((item) => (
+                                            <tr key={item.id}>
+                                                <td>{item.itemName}</td>
+                                                <td className="u-text-muted">{item.itemType}</td>
+                                                <td className="u-text-center">{item.quantity}</td>
+                                                <td className="u-text-right u-tabular">
+                                                    ₹{item.unitPrice ? item.unitPrice.toFixed(2) : '0.00'}
+                                                </td>
+                                                <td className="u-text-center">
+                                                    {item.billable ? (
+                                                        <span className="z-badge is-soft is-success">Yes</span>
+                                                    ) : (
+                                                        <span className="z-badge is-soft is-neutral">No</span>
+                                                    )}
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {consumption[caseItem.id].map((item) => (
-                                                <tr key={item.id} className="border-b text-black">
-                                                    <td className="px-3 py-2">{item.itemName}</td>
-                                                    <td className="px-3 py-2 text-gray-600">{item.itemType}</td>
-                                                    <td className="px-3 py-2 text-center">{item.quantity}</td>
-                                                    <td className="px-3 py-2 text-right">
-                                                        ${item.unitPrice ? item.unitPrice.toFixed(2) : '0.00'}
-                                                    </td>
-                                                    <td className="px-3 py-2 text-center">
-                                                        {item.billable ? 'Yes' : 'No'}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        ))}
+                                    </tbody>
+                                </table>
                             ) : (
-                                <div className="text-gray-600 text-sm">No consumption items recorded</div>
+                                <p className="u-text-sm u-text-muted">No consumption items recorded</p>
                             )}
                         </div>
                     )}

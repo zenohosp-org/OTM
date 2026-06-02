@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getBookings, getHmsRooms } from '../api/client';
+import { Loader2, LayoutGrid, Calendar, ChevronRight } from 'lucide-react';
 
 function generateTimeSlots() {
     const slots = [];
@@ -16,13 +17,13 @@ function isTimeInRange(timeSlot, start, end) {
     return hour >= startHour && hour < endHour;
 }
 
-const STATUS_COLORS = {
-    REQUESTED: 'bg-gray-200',
-    CONFIRMED: 'bg-blue-200',
-    IN_PROGRESS: 'bg-green-200 animate-pulse',
-    PENDING_SANITATION: 'bg-amber-200',
-    COMPLETED: 'bg-slate-200',
-    CANCELLED: 'bg-red-200',
+const STATUS_CLASS = {
+    REQUESTED:          'status-requested',
+    CONFIRMED:          'status-confirmed',
+    IN_PROGRESS:        'status-in-progress',
+    PENDING_SANITATION: 'status-sanitation',
+    COMPLETED:          'status-completed',
+    CANCELLED:          'status-cancelled',
 };
 
 export default function Schedules() {
@@ -72,12 +73,29 @@ export default function Schedules() {
     const timeSlots = generateTimeSlots();
 
     return (
-        <div className="p-8">
-            <h1 className="text-3xl font-bold mb-6 text-black">Schedules</h1>
+        <div className="z-page">
+            <header className="z-page-header">
+                <div>
+                    <h1 className="z-page-title">Schedules</h1>
+                    <p className="z-page-subtitle">Today's OT room timeline and availability</p>
+                </div>
+            </header>
 
-            <div className="flex gap-2 mb-6 border-b border-gray-200">
-                <TabButton label="Room List" active={tab === 'rooms'} onClick={() => setTab('rooms')} />
-                <TabButton label="Timeline" active={tab === 'timeline'} onClick={() => setTab('timeline')} />
+            <div className="z-tabs-pill">
+                <button
+                    onClick={() => setTab('rooms')}
+                    className={`z-tab-pill${tab === 'rooms' ? ' is-active' : ''}`}
+                >
+                    <LayoutGrid className="u-w-4 u-h-4" />
+                    Room List
+                </button>
+                <button
+                    onClick={() => setTab('timeline')}
+                    className={`z-tab-pill${tab === 'timeline' ? ' is-active' : ''}`}
+                >
+                    <Calendar className="u-w-4 u-h-4" />
+                    Timeline
+                </button>
             </div>
 
             {tab === 'rooms' && (
@@ -98,93 +116,97 @@ export default function Schedules() {
     );
 }
 
-function TabButton({ label, active, onClick }) {
-    return (
-        <button
-            onClick={onClick}
-            className={`px-5 py-2 font-medium text-sm border-b-2 transition -mb-px ${
-                active
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-black'
-            }`}
-        >
-            {label}
-        </button>
-    );
-}
-
 function RoomList({ rooms, loading, onViewTimeline }) {
-    if (loading) return <div className="text-black">Loading rooms...</div>;
+    if (loading) {
+        return (
+            <div className="z-page-loader">
+                <Loader2 />
+                <span>Loading rooms…</span>
+            </div>
+        );
+    }
+
+    if (rooms.length === 0) {
+        return (
+            <div className="z-card">
+                <div className="z-empty">
+                    <div className="z-empty-icon"><LayoutGrid /></div>
+                    <p className="z-empty-title">No OT rooms found</p>
+                    <p className="z-empty-description">HMS rooms will appear here once available.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="w-full">
-                <thead>
-                    <tr className="border-b bg-gray-50">
-                        <th className="px-6 py-3 text-left font-semibold text-black">Room</th>
-                        <th className="px-6 py-3 text-left font-semibold text-black">Type</th>
-                        <th className="px-6 py-3 text-left font-semibold text-black">Status</th>
-                        <th className="px-6 py-3 text-left font-semibold text-black">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rooms.map((room) => (
-                        <tr key={room.id} className="border-b hover:bg-gray-50">
-                            <td className="px-6 py-3 text-sm text-black">{room.roomNumber}</td>
-                            <td className="px-6 py-3 text-sm text-black">{room.roomType}</td>
-                            <td className="px-6 py-3 text-sm text-black">{room.status}</td>
-                            <td className="px-6 py-3 text-sm">
-                                <button
-                                    onClick={() => onViewTimeline(room)}
-                                    className="text-blue-600 hover:text-blue-800 font-medium"
-                                >
-                                    View Timeline
-                                </button>
-                            </td>
+        <div className="z-card is-no-padding">
+            <div className="u-overflow-x-auto">
+                <table className="z-table">
+                    <thead>
+                        <tr>
+                            <th>Room</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th className="col-actions">Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-            {rooms.length === 0 && (
-                <div className="p-6 text-black">No OT rooms found</div>
-            )}
+                    </thead>
+                    <tbody>
+                        {rooms.map((room) => (
+                            <tr key={room.id}>
+                                <td><span className="z-table-cell-title">{room.roomNumber}</span></td>
+                                <td>{room.roomType || '—'}</td>
+                                <td>
+                                    <span className="z-badge is-soft is-neutral">{room.status || 'Active'}</span>
+                                </td>
+                                <td className="col-actions">
+                                    <button onClick={() => onViewTimeline(room)} className="z-btn-ghost is-sm">
+                                        Timeline <ChevronRight className="u-w-4 u-h-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
 
 function Timeline({ columns, bookings, loading, selectedRoom, timeSlots, onClearRoom }) {
-    if (loading) return <div className="text-black">Loading timeline...</div>;
+    if (loading) {
+        return (
+            <div className="z-page-loader">
+                <Loader2 />
+                <span>Loading timeline…</span>
+            </div>
+        );
+    }
 
     return (
-        <div>
+        <div className="u-stack-md">
             {selectedRoom && (
-                <div className="flex items-center gap-4 mb-4">
-                    <span className="text-black font-semibold">Room: {selectedRoom.roomNumber}</span>
-                    <button
-                        onClick={onClearRoom}
-                        className="text-sm text-blue-600 hover:text-blue-800"
-                    >
+                <div className="u-flex u-items-center u-gap-3">
+                    <span className="u-font-bold u-text-strong">Room: {selectedRoom.roomNumber}</span>
+                    <button onClick={onClearRoom} className="z-btn-ghost is-sm">
                         Show all rooms
                     </button>
                 </div>
             )}
 
-            <div className="overflow-x-auto bg-white rounded-lg shadow">
-                <table className="w-full">
+            <div className="schedule-timeline">
+                <table className="schedule-timeline-table">
                     <thead>
-                        <tr className="border-b bg-gray-50">
-                            <th className="px-4 py-3 text-left font-semibold w-32 text-black">Time</th>
+                        <tr>
+                            <th className="time-col">Time</th>
                             {columns.map((room) => (
-                                <th key={room.id} className="px-4 py-3 text-left font-semibold border-l text-black">
-                                    Room {room.roomNumber || room.id}
-                                </th>
+                                <th key={room.id}>Room {room.roomNumber || room.id}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {timeSlots.map((slot, i) => (
-                            <tr key={i} className="border-b hover:bg-gray-50">
-                                <td className="px-4 py-2 font-medium text-sm bg-gray-50 text-black">{slot}</td>
+                            <tr key={i}>
+                                <td className="time-col">{slot}</td>
                                 {columns.map((room) => {
                                     const booking = bookings.find(
                                         (b) =>
@@ -192,11 +214,11 @@ function Timeline({ columns, bookings, loading, selectedRoom, timeSlots, onClear
                                             isTimeInRange(slot, b.scheduledStart, b.scheduledEnd)
                                     );
                                     return (
-                                        <td key={`${room.id}-${i}`} className="px-4 py-2 border-l">
+                                        <td key={`${room.id}-${i}`}>
                                             {booking && (
-                                                <div className={`p-2 rounded text-sm text-black ${STATUS_COLORS[booking.status] || 'bg-gray-100'}`}>
-                                                    <div className="font-semibold">{booking.procedureName}</div>
-                                                    <div className="text-xs">{booking.surgeonName}</div>
+                                                <div className={`schedule-cell ${STATUS_CLASS[booking.status] || 'status-requested'}`}>
+                                                    <span className="schedule-cell-title">{booking.procedureName}</span>
+                                                    <span className="schedule-cell-sub">{booking.surgeonName}</span>
                                                 </div>
                                             )}
                                         </td>

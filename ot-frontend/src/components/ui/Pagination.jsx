@@ -15,30 +15,27 @@ export default function Pagination({ currentPage, totalPages, totalItems, pageSi
     pages.push(totalPages);
   }
   return (
-    <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-100 dark:border-[#1e1e1e]">
-      <p className="text-xs text-slate-600 dark:text-[#999999]">
-        Showing <span className="font-semibold text-slate-600 dark:text-[#888888]">{from}–{to}</span> of <span className="font-semibold text-slate-600 dark:text-[#888888]">{totalItems}</span>
+    <div className="z-pagination">
+      <p className="z-pagination-info">
+        Showing <strong>{from}–{to}</strong> of <strong>{totalItems}</strong>
       </p>
-      <div className="flex items-center gap-1">
+      <div className="z-pagination-controls">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-[#2a2a2a] text-slate-500 dark:text-[#888888] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="z-pagination-btn"
+          aria-label="Previous page"
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="u-w-4 u-h-4" />
         </button>
         {pages.map((p, i) =>
           p === "…" ? (
-            <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-slate-600 dark:text-[#999999]">…</span>
+            <span key={`ellipsis-${i}`} className="z-pagination-ellipsis">…</span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors ${
-                currentPage === p
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border border-transparent"
-                  : "border border-slate-200 dark:border-[#2a2a2a] text-slate-600 dark:text-[#888888] hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
-              }`}
+              className={`z-pagination-btn${currentPage === p ? " is-active" : ""}`}
             >
               {p}
             </button>
@@ -47,9 +44,10 @@ export default function Pagination({ currentPage, totalPages, totalItems, pageSi
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-[#2a2a2a] text-slate-500 dark:text-[#888888] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="z-pagination-btn"
+          aria-label="Next page"
         >
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="u-w-4 u-h-4" />
         </button>
       </div>
     </div>

@@ -16,55 +16,47 @@ export default function Header({ onMenuClick }) {
   const role = user?.roleDisplay || user?.role || "";
 
   return (
-    <header className="h-14 bg-white dark:bg-[#111111] border-b border-slate-200 dark:border-[#222222] flex items-center px-4 gap-3 shrink-0">
+    <header className="app-topbar">
       <button
         onClick={onMenuClick}
-        className="text-slate-500 hover:text-slate-800 dark:text-[#888888] dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1a1a1a] transition-colors"
+        className="topbar-toggle"
         aria-label="Toggle sidebar"
       >
-        <Menu className="w-5 h-5" />
+        <Menu />
       </button>
-      <span className="text-sm font-semibold text-slate-700 dark:text-[#cccccc] flex-1">
-        OT Management System
-      </span>
-      <div className="flex items-center gap-1">
+
+      <span className="topbar-title">OT Management System</span>
+
+      <div className="topbar-right">
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-slate-500 dark:text-[#888888] hover:bg-slate-100 dark:hover:bg-[#1a1a1a] hover:text-slate-800 dark:hover:text-white transition-colors"
+          className="topbar-action-btn"
           aria-label="Toggle theme"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-        <button
-          className="p-2 rounded-lg text-slate-500 dark:text-[#888888] hover:bg-slate-100 dark:hover:bg-[#1a1a1a] hover:text-slate-800 dark:hover:text-white transition-colors relative"
-          aria-label="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-slate-900 dark:bg-white" />
+          {theme === "dark" ? <Sun /> : <Moon />}
         </button>
 
-        <div className="h-8 w-px bg-slate-200 dark:bg-[#222222] mx-2" />
+        <button className="topbar-action-btn" aria-label="Notifications">
+          <Bell />
+          <span className="topbar-action-dot" />
+        </button>
 
-        <div className="flex items-center gap-3 ml-1">
-          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#333333] border border-slate-300 dark:border-[#444444] flex items-center justify-center text-xs font-bold text-slate-700 dark:text-[#cccccc] shrink-0">
-            {initials}
-          </div>
-          <div className="hidden sm:flex flex-col items-start">
-            <span className="text-sm font-semibold text-slate-900 dark:text-white leading-tight max-w-[160px] truncate">
-              {displayName}
-            </span>
+        <div className="topbar-user">
+          <div className="z-avatar is-md is-gradient">{initials}</div>
+          <div className="topbar-user-text">
+            <span className="topbar-user-name">{displayName}</span>
             {role && (
-              <span className="text-xs text-slate-500 dark:text-[#888888] capitalize">
-                {role.replace(/_/g, " ")}
-              </span>
+              <span className="topbar-user-role">{role.replace(/_/g, " ")}</span>
             )}
           </div>
           <button
             onClick={logout}
             title="Logout"
-            className="p-1.5 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors shrink-0"
+            className="topbar-action-btn"
+            aria-label="Logout"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut />
           </button>
         </div>
       </div>

@@ -24,20 +24,17 @@ export default function NewBooking() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    // Patient
     const [patients, setPatients] = useState([]);
     const [patientSearch, setPatientSearch] = useState('');
     const [showPatientDrop, setShowPatientDrop] = useState(false);
     const [searchingPatients, setSearchingPatients] = useState(false);
 
-    // Surgeon
     const [surgeons, setSurgeons] = useState([]);
     const [surgeonSearch, setSurgeonSearch] = useState('');
     const [showSurgeonDrop, setShowSurgeonDrop] = useState(false);
     const [searchingSurgeons, setSearchingSurgeons] = useState(false);
     const [specialization, setSpecialization] = useState('');
 
-    // Inventory kits
     const [allKits, setAllKits] = useState([]);
     const [kitSearch, setKitSearch] = useState('');
     const [showKitDrop, setShowKitDrop] = useState(false);
@@ -46,13 +43,11 @@ export default function NewBooking() {
     const [selectedKits, setSelectedKits] = useState([]);
     const kitRetry = useRef(null);
 
-    // Procedure / service
     const [services, setServices] = useState([]);
     const [serviceSearch, setServiceSearch] = useState('');
     const [showServiceDrop, setShowServiceDrop] = useState(false);
     const [loadingServices, setLoadingServices] = useState(false);
 
-    // Admissions (for resolving admissionId on patient pick — no UI list)
     const [admissions, setAdmissions] = useState([]);
 
     const [form, setForm] = useState({
@@ -203,49 +198,40 @@ export default function NewBooking() {
     );
 
     return (
-        <div className="max-w-7xl mx-auto space-y-5">
-            {/* Page header */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/cases')}
-                        className="p-2 rounded-lg text-slate-500 dark:text-[#888888] hover:bg-slate-100 dark:hover:bg-[#1a1a1a] hover:text-slate-800 dark:hover:text-white transition-colors"
-                        aria-label="Back to Cases"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
+        <div className="z-page">
+            <header className="z-page-header">
+                <div className="z-page-title-group">
+                    <button onClick={() => navigate('/cases')} className="z-back-btn" aria-label="Back to Cases">
+                        <ArrowLeft />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">New OT Booking</h1>
-                        <p className="text-sm text-slate-500 dark:text-[#888888] mt-0.5">
-                            Schedule a surgical case for the operating theatre
-                        </p>
+                        <h1 className="z-page-title">New OT Booking</h1>
+                        <p className="z-page-subtitle">Schedule a surgical case for the operating theatre</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => navigate('/cases')} className="btn-secondary">Cancel</button>
+                <div className="z-page-actions">
+                    <button onClick={() => navigate('/cases')} className="z-btn-cancel">Cancel</button>
                     <button
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="btn-primary"
+                        className={`z-btn-primary${submitting ? ' z-btn-loading' : ''}`}
                     >
-                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                        <Plus className="u-w-4 u-h-4" />
                         {submitting ? 'Creating…' : 'Create Booking'}
                     </button>
                 </div>
-            </div>
+            </header>
 
             {error && (
-                <div className="flex items-start gap-2.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 px-4 py-3 rounded-lg text-sm">
-                    <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    {error}
+                <div className="z-alert is-danger">
+                    <XCircle />
+                    <span>{error}</span>
                 </div>
             )}
 
-            {/* Form grid — two columns on lg+, stacked on smaller */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Patient */}
+            <div className="u-grid u-grid-cols-1 lg:u-grid-cols-2 u-gap-5">
                 <FormCard title="Patient" icon={User} required>
-                    <div className="relative">
+                    <div className="u-relative">
                         <SearchField
                             placeholder="Search by name, MRN or phone…"
                             value={patientSearch}
@@ -259,17 +245,11 @@ export default function NewBooking() {
                                     const isInpatient = admissions.some((a) => String(a.patientId) === String(p.id));
                                     return (
                                         <DropdownItem key={p.id} onClick={() => handlePatientSelect(p)}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium text-slate-900 dark:text-white">
-                                                    {p.name || `${p.firstName} ${p.lastName}`}
-                                                </span>
-                                                {isInpatient && (
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
-                                                        Inpatient
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-xs text-slate-500 dark:text-[#888888]">
+                                            <span className="z-dropdown-item-title u-flex u-items-center u-gap-2">
+                                                {p.name || `${p.firstName} ${p.lastName}`}
+                                                {isInpatient && <span className="z-badge is-soft is-warning">Inpatient</span>}
+                                            </span>
+                                            <span className="z-dropdown-item-sub">
                                                 MRN: {p.mrn}{p.age != null ? ` · Age: ${p.age}` : ''}
                                             </span>
                                         </DropdownItem>
@@ -287,10 +267,9 @@ export default function NewBooking() {
                     )}
                 </FormCard>
 
-                {/* Procedure */}
                 <FormCard title="Procedure" icon={Activity} required>
-                    <div className="space-y-2.5">
-                        <div className="relative">
+                    <div className="u-stack-sm">
+                        <div className="u-relative">
                             <SearchField
                                 placeholder={loadingServices ? 'Loading services…' : 'Search by procedure name…'}
                                 value={serviceSearch}
@@ -305,9 +284,9 @@ export default function NewBooking() {
                                     <Dropdown>
                                         {filtered.map((svc) => (
                                             <DropdownItem key={svc.id} onClick={() => handleServiceSelect(svc)}>
-                                                <span className="font-medium text-slate-900 dark:text-white">{svc.name}</span>
+                                                <span className="z-dropdown-item-title">{svc.name}</span>
                                                 {svc.price != null && (
-                                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                                                    <span className="u-text-success u-font-semibold u-text-xs">
                                                         ₹{Number(svc.price).toLocaleString('en-IN')}
                                                     </span>
                                                 )}
@@ -325,7 +304,7 @@ export default function NewBooking() {
                             />
                         ) : (
                             <input
-                                className="input"
+                                className="z-input"
                                 placeholder="Or type procedure name manually…"
                                 value={form.procedureName}
                                 onChange={(e) => setForm((f) => ({ ...f, procedureName: e.target.value.slice(0, 300), hmsServiceId: '' }))}
@@ -333,7 +312,7 @@ export default function NewBooking() {
                         )}
                         {form.procedureName && !form.hmsServiceId && (
                             <input
-                                className="input"
+                                className="z-input"
                                 type="number" step="0.01" min="0"
                                 placeholder="Procedure charge (₹)"
                                 value={form.procedureCharge}
@@ -343,13 +322,12 @@ export default function NewBooking() {
                     </div>
                 </FormCard>
 
-                {/* Schedule */}
                 <FormCard title="Schedule" icon={Calendar} required>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="label">Start time</label>
+                    <div className="u-grid u-grid-cols-2 u-gap-3">
+                        <div className="z-field">
+                            <label className="z-label">Start time</label>
                             <input
-                                className="input"
+                                className="z-input"
                                 type="datetime-local"
                                 value={form.scheduledStart}
                                 onChange={(e) => setForm((f) => ({
@@ -358,10 +336,10 @@ export default function NewBooking() {
                                 required
                             />
                         </div>
-                        <div>
-                            <label className="label">End time</label>
+                        <div className="z-field">
+                            <label className="z-label">End time</label>
                             <input
-                                className="input"
+                                className="z-input"
                                 type="datetime-local"
                                 value={form.scheduledEnd}
                                 onChange={(e) => setForm((f) => ({
@@ -373,18 +351,17 @@ export default function NewBooking() {
                     </div>
                 </FormCard>
 
-                {/* Surgeon */}
                 <FormCard title="Surgeon" icon={Stethoscope} required>
-                    <div className="space-y-2.5">
+                    <div className="u-stack-sm">
                         <select
-                            className="input"
+                            className="z-select"
                             value={specialization}
                             onChange={(e) => { setSpecialization(e.target.value); setSurgeons([]); setSurgeonSearch(''); }}
                         >
                             <option value="">All Specializations</option>
                             {SPECIALIZATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <div className="relative">
+                        <div className="u-relative">
                             <SearchField
                                 placeholder="Search by surgeon name…"
                                 value={surgeonSearch}
@@ -396,11 +373,11 @@ export default function NewBooking() {
                                 <Dropdown>
                                     {surgeons.map((s) => (
                                         <DropdownItem key={s.id || s.userId} onClick={() => handleSurgeonSelect(s)}>
-                                            <span className="font-medium text-slate-900 dark:text-white">
+                                            <span className="z-dropdown-item-title">
                                                 {s.name || `${s.firstName} ${s.lastName}`}
                                             </span>
-                                            <span className="text-xs text-slate-500 dark:text-[#888888]">
-                                                {s.specialization && <span className="text-blue-600 dark:text-blue-400 mr-2">{s.specialization}</span>}
+                                            <span className="z-dropdown-item-sub">
+                                                {s.specialization && <span className="u-text-info u-font-semibold u-mr-2">{s.specialization}</span>}
                                                 {s.email}
                                             </span>
                                         </DropdownItem>
@@ -418,8 +395,7 @@ export default function NewBooking() {
                     </div>
                 </FormCard>
 
-                {/* OT Room — full width row */}
-                <div className="lg:col-span-2">
+                <div className="u-col-full lg:u-col-span-2">
                     <FormCard title="OT Room" icon={Calendar} required>
                         <RoomGrid
                             start={form.scheduledStart}
@@ -430,12 +406,11 @@ export default function NewBooking() {
                     </FormCard>
                 </div>
 
-                {/* Inventory kits */}
                 <FormCard title="Inventory Kits" icon={Boxes}>
                     {kitError && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">{kitError}</p>
+                        <p className="u-text-warning u-text-xs u-mb-2">{kitError}</p>
                     )}
-                    <div className="relative">
+                    <div className="u-relative">
                         <SearchField
                             placeholder={kitError ? 'Enter kit name…' : 'Search kits by name or code…'}
                             value={kitSearch}
@@ -447,8 +422,8 @@ export default function NewBooking() {
                             <Dropdown>
                                 {filteredKits.map((k) => (
                                     <DropdownItem key={k.id} onClick={() => handleAddKit(k)}>
-                                        <span className="font-medium text-slate-900 dark:text-white">{k.name}</span>
-                                        {k.code && <span className="text-xs text-slate-500 dark:text-[#888888]">Code: {k.code}</span>}
+                                        <span className="z-dropdown-item-title">{k.name}</span>
+                                        {k.code && <span className="z-dropdown-item-sub">Code: {k.code}</span>}
                                     </DropdownItem>
                                 ))}
                             </Dropdown>
@@ -458,34 +433,42 @@ export default function NewBooking() {
                         <button
                             type="button"
                             onClick={() => handleAddKit({ id: `manual_${Date.now()}`, name: kitSearch, price: 0 })}
-                            className="mt-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                            className="z-btn-ghost is-sm u-mt-2"
                         >
-                            + Add &ldquo;{kitSearch}&rdquo; as custom item
+                            <Plus className="u-w-4 u-h-4" />
+                            Add &ldquo;{kitSearch}&rdquo; as custom item
                         </button>
                     )}
                     {selectedKits.length > 0 && (
-                        <div className="mt-3 space-y-2">
+                        <div className="u-stack-sm u-mt-3">
                             {selectedKits.map((kit) => (
-                                <div key={kit.id} className="flex items-center gap-2 bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-slate-200 dark:border-[#2a2a2a]">
-                                    <span className="flex-1 text-sm font-medium text-slate-900 dark:text-white truncate">{kit.name}</span>
-                                    <div className="flex items-center gap-1">
+                                <div key={kit.id} className="consumption-row">
+                                    <span className="consumption-row-title u-flex-1 u-truncate">{kit.name}</span>
+                                    <div className="u-flex u-items-center u-gap-2">
                                         <input
                                             type="number" min="1" value={kit.quantity}
                                             onChange={(e) => setSelectedKits((kits) => kits.map((k) => k.id === kit.id
                                                 ? { ...k, quantity: Math.max(1, Number(e.target.value)) } : k))}
-                                            className="w-14 input py-1 text-xs text-center"
+                                            className="z-input is-sm kit-qty-input"
+                                            aria-label="Quantity"
                                         />
-                                        <span className="text-xs text-slate-500 dark:text-[#888888]">qty</span>
+                                        <span className="u-text-xs u-text-muted">qty</span>
                                         <input
                                             type="number" step="0.01" min="0" value={kit.unitPrice}
                                             onChange={(e) => setSelectedKits((kits) => kits.map((k) => k.id === kit.id
                                                 ? { ...k, unitPrice: Math.max(0, Number(e.target.value)) } : k))}
-                                            className="w-20 input py-1 text-xs text-center"
+                                            className="z-input is-sm kit-price-input"
+                                            aria-label="Unit price"
                                         />
-                                        <span className="text-xs text-slate-500 dark:text-[#888888]">₹</span>
+                                        <span className="u-text-xs u-text-muted">₹</span>
                                     </div>
-                                    <button type="button" onClick={() => setSelectedKits((kits) => kits.filter((k) => k.id !== kit.id))}>
-                                        <Trash2 className="w-3.5 h-3.5 text-rose-400 hover:text-rose-600 transition-colors" />
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedKits((kits) => kits.filter((k) => k.id !== kit.id))}
+                                        className="consumption-row-delete"
+                                        aria-label="Remove kit"
+                                    >
+                                        <Trash2 />
                                     </button>
                                 </div>
                             ))}
@@ -493,10 +476,9 @@ export default function NewBooking() {
                     )}
                 </FormCard>
 
-                {/* Notes */}
                 <FormCard title="Notes" icon={FileText}>
                     <textarea
-                        className="input resize-none"
+                        className="z-textarea"
                         rows={4}
                         placeholder="Clinical notes, allergies, special requirements…"
                         value={form.notes}
@@ -505,11 +487,14 @@ export default function NewBooking() {
                 </FormCard>
             </div>
 
-            {/* Bottom action row mirrors the top for tall pages */}
-            <div className="flex justify-end gap-2 pt-2">
-                <button onClick={() => navigate('/cases')} className="btn-secondary">Cancel</button>
-                <button onClick={handleSubmit} disabled={submitting} className="btn-primary">
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            <div className="u-flex u-justify-end u-gap-2 u-pt-2">
+                <button onClick={() => navigate('/cases')} className="z-btn-cancel">Cancel</button>
+                <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className={`z-btn-primary${submitting ? ' z-btn-loading' : ''}`}
+                >
+                    <Plus className="u-w-4 u-h-4" />
                     {submitting ? 'Creating…' : 'Create Booking'}
                 </button>
             </div>
@@ -521,57 +506,45 @@ export default function NewBooking() {
 
 function FormCard({ title, icon: Icon, required, children }) {
     return (
-        <div className="rounded-lg bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#1e1e1e] p-5">
-            <div className="flex items-center gap-2 mb-3">
+        <div className="z-card">
+            <div className="u-flex u-items-center u-gap-2 u-mb-3">
                 {Icon && (
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#1a1a1a] flex items-center justify-center">
-                        <Icon className="w-3.5 h-3.5 text-slate-500 dark:text-[#888888]" />
+                    <div className="z-card-icon-pill">
+                        <Icon />
                     </div>
                 )}
-                <h3 className="text-xs font-bold text-slate-500 dark:text-[#888888] uppercase tracking-wider">
-                    {title}
-                </h3>
-                {required && <span className="text-rose-400 text-xs">*</span>}
+                <h3 className="z-card-section-title">{title}</h3>
+                {required && <span className="u-text-danger u-text-xs">*</span>}
             </div>
-            <div className="relative">{children}</div>
+            <div className="u-relative">{children}</div>
         </div>
     );
 }
 
 function SearchField({ placeholder, value, onChange, onFocus, loading }) {
     return (
-        <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <div className="z-search-bar">
+            <Search className="z-search-icon" />
             <input
                 type="text"
                 placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onFocus={onFocus}
-                className="input pl-9 pr-9"
+                className="z-input"
             />
-            {loading && (
-                <Loader2 className="w-3.5 h-3.5 absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-blue-500" />
-            )}
+            {loading && <Loader2 className="z-search-spinner" />}
         </div>
     );
 }
 
 function Dropdown({ children }) {
-    return (
-        <div className="absolute top-full mt-1.5 w-full bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#2a2a2a] rounded-lg shadow-xl z-20 max-h-52 overflow-y-auto">
-            {children}
-        </div>
-    );
+    return <div className="z-dropdown">{children}</div>;
 }
 
 function DropdownItem({ onClick, children }) {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-500/10 border-b border-slate-50 dark:border-[#1a1a1a] last:border-b-0 flex flex-col gap-0.5 transition-colors"
-        >
+        <button type="button" onClick={onClick} className="z-dropdown-item">
             {children}
         </button>
     );
@@ -579,17 +552,13 @@ function DropdownItem({ onClick, children }) {
 
 function SelectedTag({ label, sub, onClear }) {
     return (
-        <div className="mt-2.5 flex items-center justify-between bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg px-3.5 py-2.5">
-            <div>
-                <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 leading-tight">{label}</p>
-                {sub && <p className="text-xs text-blue-500 dark:text-blue-400 mt-0.5">{sub}</p>}
+        <div className="z-selected-tag">
+            <div className="z-selected-tag-text">
+                <p className="z-selected-tag-label">{label}</p>
+                {sub && <p className="z-selected-tag-sub">{sub}</p>}
             </div>
-            <button
-                type="button"
-                onClick={onClear}
-                className="text-blue-300 hover:text-blue-600 dark:text-blue-400/60 dark:hover:text-blue-400 ml-3 transition-colors"
-            >
-                <X className="w-3.5 h-3.5" />
+            <button type="button" onClick={onClear} className="z-selected-tag-clear" aria-label="Clear selection">
+                <X />
             </button>
         </div>
     );
@@ -617,33 +586,27 @@ function RoomGrid({ start, end, selectedRoomId, onSelect }) {
 
     if (!start || !end) {
         return (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 rounded-lg border-2 border-dashed border-slate-200 dark:border-[#2a2a2a] bg-slate-50 dark:bg-[#0d0d0d]">
-                <Calendar className="w-5 h-5 text-slate-300 dark:text-[#444]" />
-                <p className="text-sm text-slate-400 dark:text-[#666666] text-center">
-                    Set a start and end time above to see room availability
-                </p>
+            <div className="room-availability-empty">
+                <Calendar />
+                <p>Set a start and end time above to see room availability</p>
             </div>
         );
     }
 
     if (loading) {
         return (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-24 rounded-lg bg-slate-100 dark:bg-[#1a1a1a] animate-pulse" />
-                ))}
+            <div className="room-availability-grid">
+                {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="room-tile-skeleton" />)}
             </div>
         );
     }
 
     if (hmsDown) {
         return (
-            <div className="space-y-3">
-                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-700 dark:text-amber-400">
-                        Room availability is unavailable. Enter a room name manually.
-                    </p>
+            <div className="u-stack-md">
+                <div className="z-alert is-warning">
+                    <AlertCircle />
+                    <span>Room availability is unavailable. Enter a room name manually.</span>
                 </div>
                 <input
                     type="text"
@@ -658,7 +621,7 @@ function RoomGrid({ start, end, selectedRoomId, onSelect }) {
                             onSelect({ id: 0, roomNumber: manualInput.trim(), available: true });
                         }
                     }}
-                    className="input"
+                    className="z-input"
                 />
             </div>
         );
@@ -666,8 +629,9 @@ function RoomGrid({ start, end, selectedRoomId, onSelect }) {
 
     if (!rooms || rooms.length === 0) {
         return (
-            <div className="py-10 text-center text-sm text-slate-400 dark:text-[#666666] rounded-lg bg-slate-50 dark:bg-[#0d0d0d] border border-slate-200 dark:border-[#1e1e1e]">
-                No OT rooms configured in HMS
+            <div className="room-availability-empty">
+                <Calendar />
+                <p>No OT rooms configured in HMS</p>
             </div>
         );
     }
@@ -676,26 +640,26 @@ function RoomGrid({ start, end, selectedRoomId, onSelect }) {
     const occupied = rooms.filter((r) => !r.available);
 
     return (
-        <div className="space-y-4">
+        <div className="u-stack-md">
             {available.length === 0 && (
-                <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-center">
-                    <Lock className="w-4 h-4 mx-auto text-rose-400 mb-1.5" />
-                    <p className="text-sm font-semibold text-rose-700 dark:text-rose-400">No rooms available for this time slot</p>
-                    <p className="text-xs text-rose-500 dark:text-rose-400/70 mt-0.5">All rooms are occupied or booked. Try a different time.</p>
+                <div className="z-alert is-danger">
+                    <Lock />
+                    <div>
+                        <p className="u-font-bold">No rooms available for this time slot</p>
+                        <p className="u-text-xs u-mt-1">All rooms are occupied or booked. Try a different time.</p>
+                    </div>
                 </div>
             )}
 
             {available.length > 0 && (
-                <div>
-                    <div className="flex items-center gap-2 mb-2.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
-                            Available — {available.length} room{available.length > 1 ? 's' : ''}
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5">
+                <div className="room-availability-section">
+                    <span className="room-availability-header is-available">
+                        <span className="room-tile-status-dot" />
+                        Available — {available.length} room{available.length > 1 ? 's' : ''}
+                    </span>
+                    <div className="room-availability-grid">
                         {available.map((room) => (
-                            <RoomCard
+                            <RoomTile
                                 key={room.id}
                                 room={room}
                                 selected={String(room.id) === String(selectedRoomId)}
@@ -707,16 +671,14 @@ function RoomGrid({ start, end, selectedRoomId, onSelect }) {
             )}
 
             {occupied.length > 0 && (
-                <div>
-                    <div className="flex items-center gap-2 mb-2.5">
-                        <span className="w-2 h-2 rounded-full bg-slate-400" />
-                        <p className="text-xs font-semibold text-slate-500 dark:text-[#888888] uppercase tracking-wide">
-                            Unavailable — {occupied.length} room{occupied.length > 1 ? 's' : ''}
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5">
+                <div className="room-availability-section">
+                    <span className="room-availability-header is-occupied">
+                        <span className="room-tile-status-dot" />
+                        Unavailable — {occupied.length} room{occupied.length > 1 ? 's' : ''}
+                    </span>
+                    <div className="room-availability-grid">
                         {occupied.map((room) => (
-                            <RoomCard key={room.id} room={room} selected={false} onSelect={() => {}} />
+                            <RoomTile key={room.id} room={room} selected={false} onSelect={() => {}} />
                         ))}
                     </div>
                 </div>
@@ -725,7 +687,7 @@ function RoomGrid({ start, end, selectedRoomId, onSelect }) {
     );
 }
 
-function RoomCard({ room, selected, onSelect }) {
+function RoomTile({ room, selected, onSelect }) {
     const isInProgress = room.occupiedStatus === 'IN_PROGRESS';
     const isSanitation = room.occupiedStatus === 'PENDING_SANITATION';
     const isHmsOccupied = room.occupiedStatus === 'HMS_OCCUPIED';
@@ -746,70 +708,41 @@ function RoomCard({ room, selected, onSelect }) {
             <button
                 type="button"
                 onClick={onSelect}
-                className={[
-                    'relative w-full rounded-lg border-2 p-3 text-left transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
-                    selected
-                        ? 'border-emerald-500 bg-emerald-500 shadow-md'
-                        : 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:border-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20',
-                ].join(' ')}
+                className={`room-tile is-available${selected ? ' is-selected' : ''}`}
             >
-                <p className={`text-sm font-bold truncate ${selected ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
-                    {roomLabel}
-                </p>
-                {room.ward && (
-                    <p className={`text-xs mt-0.5 ${selected ? 'text-emerald-100' : 'text-slate-500 dark:text-[#888888]'}`}>
-                        {room.ward}
-                    </p>
-                )}
-                <div className="mt-2 flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${selected ? 'bg-white' : 'bg-emerald-500'}`} />
-                    <span className={`text-xs font-semibold ${selected ? 'text-emerald-100' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                        {selected ? 'Selected' : 'Free'}
-                    </span>
-                    {selected && <CheckCircle2 className="w-3 h-3 ml-auto text-white" />}
+                <p className="room-tile-name">{roomLabel}</p>
+                {room.ward && <p className="room-tile-ward">{room.ward}</p>}
+                <div className="room-tile-status">
+                    <span className="room-tile-status-dot" />
+                    {selected ? 'Selected' : 'Free'}
                 </div>
+                {selected && <CheckCircle2 className="room-tile-check" />}
             </button>
         );
     }
 
-    const cardCls = isInProgress
-        ? 'border-rose-100 dark:border-rose-500/20 bg-rose-50/70 dark:bg-rose-500/5'
-        : isSanitation
-            ? 'border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/5'
-            : isHmsOccupied
-                ? 'border-slate-200 dark:border-[#2a2a2a] bg-slate-50/70 dark:bg-[#1a1a1a]'
-                : 'border-blue-100 dark:border-blue-500/20 bg-blue-50/70 dark:bg-blue-500/5';
+    const statusClass = isInProgress ? 'is-in-progress'
+        : isSanitation ? 'is-sanitation'
+        : isHmsOccupied ? 'is-hms-occupied'
+        : 'is-booked';
 
-    const badgeCls = isInProgress
-        ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
-        : isSanitation
-            ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-            : isHmsOccupied
-                ? 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400'
-                : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
-
-    const dotCls = isInProgress
-        ? 'bg-rose-500 animate-pulse'
-        : isSanitation
-            ? 'bg-amber-500'
-            : isHmsOccupied
-                ? 'bg-slate-400'
-                : 'bg-blue-500';
-
-    const statusLabel = isInProgress ? 'In Progress' : isSanitation ? 'Cleaning' : isHmsOccupied ? 'In Use' : 'Booked';
+    const statusLabel = isInProgress ? 'In Progress'
+        : isSanitation ? 'Cleaning'
+        : isHmsOccupied ? 'In Use'
+        : 'Booked';
 
     return (
-        <div className={`rounded-lg border-2 p-3 cursor-not-allowed select-none ${cardCls}`}>
-            <p className="text-sm font-bold text-slate-600 dark:text-[#888888] truncate">{roomLabel}</p>
-            <div className={`mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-semibold ${badgeCls}`}>
-                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
+        <div className={`room-tile is-occupied ${statusClass}`}>
+            <p className="room-tile-name">{roomLabel}</p>
+            <div className="room-tile-status">
+                <span className="room-tile-status-dot" />
                 {statusLabel}
             </div>
             {room.occupiedBy && (
-                <p className="text-xs text-slate-500 dark:text-[#888888] mt-1.5 truncate leading-snug">{room.occupiedBy}</p>
+                <p className="room-tile-occupied-by">{room.occupiedBy}</p>
             )}
             {freeLabel && (
-                <p className="text-xs text-slate-400 dark:text-[#666666] mt-0.5">{freeLabel}</p>
+                <p className="room-tile-free-at">{freeLabel}</p>
             )}
         </div>
     );

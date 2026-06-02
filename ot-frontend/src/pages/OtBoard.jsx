@@ -4,13 +4,15 @@ import {
     getBookings, getHmsRooms,
     confirmBooking, startBooking, endBooking, sanitizeBooking,
 } from '../api/client';
-import { RefreshCw, Activity, Clock, CheckCircle2, AlertTriangle, Plus } from 'lucide-react';
+import {
+    RefreshCw, Activity, Clock, CheckCircle2, AlertTriangle, Plus, Square, Play,
+} from 'lucide-react';
 
 const STATUS_META = {
-    IN_PROGRESS:        { label: 'In Progress',  dot: 'bg-red-500 animate-pulse',  card: 'border-red-400',   header: 'bg-red-100',   text: 'text-red-700'   },
-    PENDING_SANITATION: { label: 'Sanitation',    dot: 'bg-amber-400',              card: 'border-amber-400', header: 'bg-amber-100', text: 'text-amber-700' },
-    UPCOMING:           { label: 'Upcoming',      dot: 'bg-blue-500',               card: 'border-blue-300',  header: 'bg-blue-100',  text: 'text-blue-700'  },
-    VACANT:             { label: 'Available',     dot: 'bg-green-500',              card: 'border-green-300', header: 'bg-green-100', text: 'text-green-700' },
+    IN_PROGRESS:        { label: 'In Progress', className: 'status-in-progress' },
+    PENDING_SANITATION: { label: 'Sanitation',  className: 'status-sanitation'  },
+    UPCOMING:           { label: 'Upcoming',    className: 'status-upcoming'    },
+    VACANT:             { label: 'Available',   className: 'status-vacant'     },
 };
 
 function fmt(ms) {
@@ -109,67 +111,51 @@ export default function OtBoard() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <div className="flex items-center gap-3 text-gray-500">
-                    <RefreshCw size={20} className="animate-spin" />
-                    <span className="font-medium">Loading OT Board…</span>
-                </div>
+            <div className="z-page-loader">
+                <RefreshCw />
+                <span>Loading OT Board…</span>
             </div>
         );
     }
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* ── Header ── */}
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div className="z-page">
+            <header className="z-page-header">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Live OT Board</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="z-page-title">Live OT Board</h1>
+                    <p className="z-page-subtitle">
                         {now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={fetchData}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-700 font-medium"
-                    >
-                        <RefreshCw size={13} />
+                <div className="z-page-actions">
+                    <button onClick={fetchData} className="z-btn-secondary">
+                        <RefreshCw className="u-w-4 u-h-4" />
                         Refresh
                     </button>
-                    <button
-                        onClick={() => navigate('/cases')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium"
-                    >
-                        <Plus size={13} />
+                    <button onClick={() => navigate('/cases/new')} className="z-btn-primary">
+                        <Plus className="u-w-4 u-h-4" />
                         New Booking
                     </button>
                 </div>
+            </header>
+
+            <div className="z-stat-grid">
+                <StatTile icon={Activity}      tone="rose"    label="In Progress" value={counts.inProgress} />
+                <StatTile icon={AlertTriangle} tone="amber"   label="Sanitation"  value={counts.sanitation} />
+                <StatTile icon={Clock}         tone="blue"    label="Upcoming"    value={counts.upcoming} />
+                <StatTile icon={CheckCircle2}  tone="emerald" label="Completed"   value={counts.completed} />
             </div>
 
-            {/* ── Stats Bar ── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                {[
-                    { label: 'In Progress',  value: counts.inProgress, bg: 'bg-red-50 border-red-100',    val: 'text-red-600'   },
-                    { label: 'Sanitation',   value: counts.sanitation, bg: 'bg-amber-50 border-amber-100', val: 'text-amber-600' },
-                    { label: 'Upcoming',     value: counts.upcoming,   bg: 'bg-blue-50 border-blue-100',   val: 'text-blue-600'  },
-                    { label: 'Completed',    value: counts.completed,  bg: 'bg-green-50 border-green-100', val: 'text-green-600' },
-                ].map(s => (
-                    <div key={s.label} className={`rounded-xl border p-4 ${s.bg}`}>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{s.label}</p>
-                        <p className={`text-3xl font-bold mt-1 ${s.val}`}>{s.value}</p>
-                    </div>
-                ))}
-            </div>
-
-            {/* ── Room Grid ── */}
             {roomCards.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-                    <Activity size={40} className="mb-3 opacity-30" />
-                    <p className="font-medium">No OT rooms found</p>
-                    <p className="text-sm mt-1">HMS rooms will appear here once available</p>
+                <div className="z-empty">
+                    <div className="z-empty-icon"><Activity /></div>
+                    <p className="z-empty-title">No OT rooms found</p>
+                    <p className="z-empty-description">
+                        HMS rooms will appear here once available.
+                    </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="ot-board-grid">
                     {roomCards.map(({ room, active, upcoming, status }) => (
                         <RoomCard
                             key={room.id}
@@ -189,24 +175,35 @@ export default function OtBoard() {
     );
 }
 
+function StatTile({ icon: Icon, tone, label, value }) {
+    return (
+        <div className="z-stat-card">
+            <div className={`z-stat-icon is-${tone}`}>
+                <Icon />
+            </div>
+            <div className="z-stat-body">
+                <p className="z-stat-value">{value}</p>
+                <p className="z-stat-label">{label}</p>
+            </div>
+        </div>
+    );
+}
+
 function RoomCard({ room, active, upcoming, status, now, actioning, onAction, onView }) {
     const meta = STATUS_META[status];
-    const booking = active || upcoming;
     const roomName = room.name || room.roomNumber || `Room ${room.id}`;
 
     return (
-        <div className={`rounded-2xl border-2 ${meta.card} bg-white overflow-hidden shadow-sm`}>
-            <div className={`px-4 py-3 flex items-center justify-between ${meta.header}`}>
-                <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${meta.dot}`} />
-                    <span className="font-bold text-gray-800 text-sm">{roomName}</span>
-                </div>
-                <span className={`text-xs font-semibold uppercase tracking-wider ${meta.text}`}>
-                    {meta.label}
+        <div className={`room-card ${meta.className}`}>
+            <div className="room-card-header">
+                <span className="room-card-name">
+                    <span className="room-card-dot" />
+                    {roomName}
                 </span>
+                <span className="room-card-status">{meta.label}</span>
             </div>
 
-            <div className="p-4">
+            <div className="room-card-body">
                 {status === 'IN_PROGRESS' && active && (
                     <InProgressBody booking={active} now={now} actioning={actioning} onAction={onAction} onView={onView} />
                 )}
@@ -227,83 +224,87 @@ function RoomCard({ room, active, upcoming, status, now, actioning, onAction, on
 function InProgressBody({ booking, now, actioning, onAction, onView }) {
     const elapsed = now - new Date(booking.actualStart);
     const total = new Date(booking.scheduledEnd) - new Date(booking.scheduledStart);
-    const pct = Math.min(100, (elapsed / total) * 100);
+    const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
     const overtime = now > new Date(booking.scheduledEnd);
     const remaining = new Date(booking.scheduledEnd) - now;
 
     return (
-        <div className="space-y-3">
+        <>
             <div>
-                <p className="font-semibold text-gray-900 leading-tight">{booking.procedureName}</p>
-                <p className="text-sm text-gray-500 mt-0.5">{booking.patientName}
-                    {booking.patientMrn ? <span className="text-gray-400"> · {booking.patientMrn}</span> : null}
+                <p className="room-card-procedure">{booking.procedureName}</p>
+                <p className="room-card-meta">
+                    {booking.patientName}
+                    {booking.patientMrn && <><span className="room-card-meta-divider">·</span>{booking.patientMrn}</>}
                 </p>
                 {booking.surgeonName && (
-                    <p className="text-sm text-gray-500">Dr. {booking.surgeonName}</p>
+                    <p className="room-card-meta">Dr. {booking.surgeonName}</p>
                 )}
             </div>
 
-            <div>
-                <div className="flex justify-between text-xs mb-1">
-                    <span className="flex items-center gap-1 text-gray-500">
-                        <Activity size={11} />
-                        Elapsed: <span className="font-semibold text-gray-700 ml-0.5">{fmt(elapsed)}</span>
+            <div className="room-card-timer">
+                <div className="room-card-timer-row">
+                    <span className="elapsed">
+                        <Activity className="u-w-4 u-h-4" />
+                        Elapsed: <span className="elapsed-value">{fmt(elapsed)}</span>
                     </span>
-                    {overtime
-                        ? <span className="text-red-600 font-semibold">+{fmt(-remaining)} overtime</span>
-                        : <span className="text-gray-500">Remaining: <span className="font-semibold text-gray-700">{fmt(remaining)}</span></span>
-                    }
+                    {overtime ? (
+                        <span className="overtime">+{fmt(-remaining)} overtime</span>
+                    ) : (
+                        <span className="remaining">Remaining: <strong>{fmt(remaining)}</strong></span>
+                    )}
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="z-progress is-sm">
                     <div
-                        className={`h-2 rounded-full transition-all duration-1000 ${overtime ? 'bg-red-500' : 'bg-green-500'}`}
-                        style={{ width: `${pct}%` }}
+                        className={`z-progress-bar ${overtime ? 'is-danger' : 'is-success'}`}
+                        style={{ '--progress': `${pct}%` }}
                     />
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <div className="room-card-timer-times">
                     <span>{fmtTime(booking.scheduledStart)}</span>
                     <span>{fmtTime(booking.scheduledEnd)}</span>
                 </div>
             </div>
 
-            <div className="flex gap-2 pt-1">
-                <button onClick={() => onView(booking.id)}
-                    className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600 font-medium">
-                    Details
-                </button>
-                <button onClick={() => onAction('end', booking.id)} disabled={actioning}
-                    className="flex-1 px-3 py-2 text-xs bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-semibold disabled:opacity-50">
-                    {actioning ? '…' : '⏹ End Surgery'}
+            <div className="room-card-actions">
+                <button onClick={() => onView(booking.id)} className="z-btn-secondary is-sm">Details</button>
+                <button
+                    onClick={() => onAction('end', booking.id)}
+                    disabled={actioning}
+                    className={`z-btn-danger is-sm${actioning ? ' z-btn-loading' : ''}`}
+                >
+                    <Square className="u-w-4 u-h-4" />
+                    End Surgery
                 </button>
             </div>
-        </div>
+        </>
     );
 }
 
 function SanitationBody({ booking, now, actioning, onAction, onView }) {
     const waiting = now - new Date(booking.actualEnd || booking.scheduledEnd);
     return (
-        <div className="space-y-3">
+        <>
             <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Procedure Completed</p>
-                <p className="font-semibold text-gray-900 leading-tight">{booking.procedureName}</p>
-                <p className="text-sm text-gray-500">{booking.patientName}</p>
+                <p className="room-card-overline">Procedure Completed</p>
+                <p className="room-card-procedure">{booking.procedureName}</p>
+                <p className="room-card-meta">{booking.patientName}</p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
-                <AlertTriangle size={14} className="flex-shrink-0" />
-                <span>Room being sanitized · <span className="font-semibold">{fmt(waiting)}</span></span>
+            <div className="room-card-banner is-sanitation">
+                <AlertTriangle />
+                <span>Room being sanitized · <strong>{fmt(waiting)}</strong></span>
             </div>
-            <div className="flex gap-2 pt-1">
-                <button onClick={() => onView(booking.id)}
-                    className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600 font-medium">
-                    Details
+            <div className="room-card-actions">
+                <button onClick={() => onView(booking.id)} className="z-btn-secondary is-sm">Details</button>
+                <button
+                    onClick={() => onAction('sanitize', booking.id)}
+                    disabled={actioning}
+                    className={`z-btn-warning is-sm${actioning ? ' z-btn-loading' : ''}`}
+                >
+                    <CheckCircle2 className="u-w-4 u-h-4" />
+                    Done
                 </button>
-                <button onClick={() => onAction('sanitize', booking.id)} disabled={actioning}
-                    className="flex-1 px-3 py-2 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition font-semibold disabled:opacity-50">
-                    {actioning ? '…' : '✓ Done'}
-                </button>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -312,58 +313,63 @@ function UpcomingBody({ booking, now, actioning, onAction, onView }) {
     const soon = startsIn < 15 * 60 * 1000;
 
     return (
-        <div className="space-y-3">
+        <>
             <div>
-                <p className="font-semibold text-gray-900 leading-tight">{booking.procedureName}</p>
-                <p className="text-sm text-gray-500 mt-0.5">{booking.patientName}
-                    {booking.patientMrn ? <span className="text-gray-400"> · {booking.patientMrn}</span> : null}
+                <p className="room-card-procedure">{booking.procedureName}</p>
+                <p className="room-card-meta">
+                    {booking.patientName}
+                    {booking.patientMrn && <><span className="room-card-meta-divider">·</span>{booking.patientMrn}</>}
                 </p>
-                {booking.surgeonName && <p className="text-sm text-gray-500">Dr. {booking.surgeonName}</p>}
+                {booking.surgeonName && <p className="room-card-meta">Dr. {booking.surgeonName}</p>}
             </div>
-            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg border ${soon ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
-                <Clock size={13} className="flex-shrink-0" />
+            <div className={`room-card-banner ${soon ? 'is-soon' : 'is-upcoming'}`}>
+                <Clock />
                 <span>
-                    {booking.status === 'REQUESTED' ? 'Unconfirmed · ' : ''}
-                    Starts in <span className="font-semibold">{fmt(startsIn)}</span>
-                    <span className="text-gray-400 ml-1">({fmtTime(booking.scheduledStart)})</span>
+                    {booking.status === 'REQUESTED' && 'Unconfirmed · '}
+                    Starts in <strong>{fmt(startsIn)}</strong>
+                    <span className="u-text-subtle"> ({fmtTime(booking.scheduledStart)})</span>
                 </span>
             </div>
-            <div className="flex gap-2 pt-1">
-                <button onClick={() => onView(booking.id)}
-                    className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600 font-medium">
-                    Details
-                </button>
+            <div className="room-card-actions">
+                <button onClick={() => onView(booking.id)} className="z-btn-secondary is-sm">Details</button>
                 {booking.status === 'REQUESTED' && (
-                    <button onClick={() => onAction('confirm', booking.id)} disabled={actioning}
-                        className="flex-1 px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-semibold disabled:opacity-50">
-                        {actioning ? '…' : '✓ Confirm'}
+                    <button
+                        onClick={() => onAction('confirm', booking.id)}
+                        disabled={actioning}
+                        className={`z-btn-info is-sm${actioning ? ' z-btn-loading' : ''}`}
+                    >
+                        <CheckCircle2 className="u-w-4 u-h-4" />
+                        Confirm
                     </button>
                 )}
                 {booking.status === 'CONFIRMED' && (
-                    <button onClick={() => onAction('start', booking.id)} disabled={actioning}
-                        className="flex-1 px-3 py-2 text-xs bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-semibold disabled:opacity-50">
-                        {actioning ? '…' : '▶ Start'}
+                    <button
+                        onClick={() => onAction('start', booking.id)}
+                        disabled={actioning}
+                        className={`z-btn-success is-sm${actioning ? ' z-btn-loading' : ''}`}
+                    >
+                        <Play className="u-w-4 u-h-4" />
+                        Start
                     </button>
                 )}
             </div>
-        </div>
+        </>
     );
 }
 
 function VacantBody({ upcoming }) {
     return (
-        <div className="space-y-2 py-1">
-            <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle2 size={18} />
-                <span className="font-semibold text-sm">Room Available</span>
-            </div>
+        <div className="room-card-vacant">
+            <span className="room-card-vacant-label">
+                <CheckCircle2 className="u-w-5 u-h-5" />
+                Room Available
+            </span>
             {upcoming ? (
-                <p className="text-sm text-gray-500">
-                    Next: <span className="font-medium text-gray-700">{upcoming.procedureName}</span>
-                    {' '}at <span className="font-medium">{fmtTime(upcoming.scheduledStart)}</span>
+                <p className="room-card-vacant-next">
+                    Next: <strong>{upcoming.procedureName}</strong> at <strong>{fmtTime(upcoming.scheduledStart)}</strong>
                 </p>
             ) : (
-                <p className="text-sm text-gray-400">No more bookings today</p>
+                <p className="room-card-vacant-next u-text-subtle">No more bookings today</p>
             )}
         </div>
     );

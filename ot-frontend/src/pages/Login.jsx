@@ -22,38 +22,36 @@ export default function Login() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-[#0f0f0f] px-4">
-            <div className="w-full max-w-md">
-                <div className="card p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center">
-                            <Activity className="w-5 h-5 text-white dark:text-slate-900" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-[#888888]">ZenoHosp</p>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">OT Management</h1>
-                        </div>
+        <div className="auth-shell">
+            <div className="auth-card">
+                <div className="auth-brand">
+                    <div className="auth-brand-mark">
+                        <Activity />
                     </div>
-
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome back</h2>
-                    <p className="text-sm text-slate-500 dark:text-[#888888] mb-8">
-                        Sign in with your ZenoHosp Directory account to continue.
-                    </p>
-
-                    <button onClick={handleLogin} className="btn-primary w-full">
-                        Sign in with SSO
-                        <ArrowRight className="w-4 h-4" />
-                    </button>
-
-                    <p className="text-center text-xs text-slate-400 dark:text-[#666666] mt-6">
-                        You will be redirected to Directory SSO.
-                    </p>
+                    <div className="auth-brand-text">
+                        <p className="auth-brand-overline">ZenoHosp</p>
+                        <p className="auth-brand-title">OT Management</p>
+                    </div>
                 </div>
 
-                <p className="text-center text-xs text-slate-400 dark:text-[#666666] mt-6">
-                    Operating Theater Room Management · v1.0
+                <h2 className="auth-title">Welcome back</h2>
+                <p className="auth-description">
+                    Sign in with your ZenoHosp Directory account to continue.
+                </p>
+
+                <button onClick={handleLogin} className="z-btn-primary is-full is-lg">
+                    Sign in with SSO
+                    <ArrowRight className="u-w-4 u-h-4" />
+                </button>
+
+                <p className="auth-footer-note">
+                    You will be redirected to Directory SSO.
                 </p>
             </div>
+
+            <p className="auth-version">
+                Operating Theater Room Management · v1.0
+            </p>
         </div>
     );
 }
